@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -6,10 +7,15 @@ import { Label } from '@/components/ui/label';
 import { Separator } from '@/components/ui/separator';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { CreditCard, Mail, Lock, User, Eye, EyeOff } from 'lucide-react';
+import { useToast } from '@/hooks/use-toast';
 
 const Auth = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  const navigate = useNavigate();
+  const { toast } = useToast();
+  
   const [loginData, setLoginData] = useState({ email: '', password: '' });
   const [registerData, setRegisterData] = useState({ 
     name: '', 
@@ -17,6 +23,88 @@ const Auth = () => {
     password: '', 
     confirmPassword: '' 
   });
+
+  const handleLogin = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    if (!loginData.email || !loginData.password) {
+      toast({
+        title: "Campos obrigatórios",
+        description: "Preencha email e senha.",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    setIsLoading(true);
+    
+    // Simular login (substituir pela integração Supabase)
+    setTimeout(() => {
+      setIsLoading(false);
+      toast({
+        title: "Login realizado!",
+        description: "Bem-vindo ao Finska!",
+      });
+      navigate('/');
+    }, 1500);
+  };
+
+  const handleRegister = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    if (!registerData.name || !registerData.email || !registerData.password) {
+      toast({
+        title: "Campos obrigatórios",
+        description: "Preencha todos os campos obrigatórios.",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    if (registerData.password !== registerData.confirmPassword) {
+      toast({
+        title: "Senhas não coincidem",
+        description: "As senhas digitadas são diferentes.",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    setIsLoading(true);
+    
+    // Simular registro (substituir pela integração Supabase)
+    setTimeout(() => {
+      setIsLoading(false);
+      toast({
+        title: "Conta criada!",
+        description: "Sua conta foi criada com sucesso!",
+      });
+      navigate('/');
+    }, 1500);
+  };
+
+  const handleSocialLogin = (provider: string) => {
+    toast({
+      title: `Login com ${provider}`,
+      description: "Funcionalidade será implementada com integração Supabase.",
+    });
+  };
+
+  const handleForgotPassword = () => {
+    if (!loginData.email) {
+      toast({
+        title: "Email necessário",
+        description: "Digite seu email no campo acima para recuperar a senha.",
+        variant: "destructive"
+      });
+      return;
+    }
+    
+    toast({
+      title: "Email enviado!",
+      description: "Verifique sua caixa de entrada para redefinir a senha.",
+    });
+  };
 
   return (
     <div className="min-h-screen bg-gradient-hero flex items-center justify-center p-4">
@@ -42,7 +130,7 @@ const Auth = () => {
               </TabsList>
               
               <TabsContent value="login" className="space-y-4 mt-6">
-                <div className="space-y-4">
+                <form onSubmit={handleLogin} className="space-y-4">
                   <div className="space-y-2">
                     <Label htmlFor="login-email">Email</Label>
                     <div className="relative">
@@ -86,20 +174,29 @@ const Auth = () => {
                     </div>
                   </div>
                   
-                  <Button className="w-full bg-gradient-primary">
-                    Entrar
+                  <Button 
+                    type="submit" 
+                    className="w-full bg-gradient-primary"
+                    disabled={isLoading}
+                  >
+                    {isLoading ? "Entrando..." : "Entrar"}
                   </Button>
                   
                   <div className="text-center">
-                    <Button variant="link" className="text-primary">
+                    <Button 
+                      type="button"
+                      variant="link" 
+                      className="text-primary"
+                      onClick={handleForgotPassword}
+                    >
                       Esqueci minha senha
                     </Button>
                   </div>
-                </div>
+                </form>
               </TabsContent>
               
               <TabsContent value="register" className="space-y-4 mt-6">
-                <div className="space-y-4">
+                <form onSubmit={handleRegister} className="space-y-4">
                   <div className="space-y-2">
                     <Label htmlFor="register-name">Nome Completo</Label>
                     <div className="relative">
@@ -186,10 +283,14 @@ const Auth = () => {
                     </div>
                   </div>
                   
-                  <Button className="w-full bg-gradient-primary">
-                    Criar Conta
+                  <Button 
+                    type="submit" 
+                    className="w-full bg-gradient-primary"
+                    disabled={isLoading}
+                  >
+                    {isLoading ? "Criando conta..." : "Criar Conta"}
                   </Button>
-                </div>
+                </form>
               </TabsContent>
             </Tabs>
             
@@ -206,7 +307,11 @@ const Auth = () => {
               </div>
               
               <div className="mt-4 grid grid-cols-2 gap-4">
-                <Button variant="outline" className="w-full">
+                <Button 
+                  variant="outline" 
+                  className="w-full"
+                  onClick={() => handleSocialLogin('Google')}
+                >
                   <svg className="h-4 w-4 mr-2" viewBox="0 0 24 24">
                     <path fill="currentColor" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
                     <path fill="currentColor" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
@@ -215,7 +320,11 @@ const Auth = () => {
                   </svg>
                   Google
                 </Button>
-                <Button variant="outline" className="w-full">
+                <Button 
+                  variant="outline" 
+                  className="w-full"
+                  onClick={() => handleSocialLogin('Twitter')}
+                >
                   <svg className="h-4 w-4 mr-2" fill="currentColor" viewBox="0 0 24 24">
                     <path d="M24 4.557c-.883.392-1.832.656-2.828.775 1.017-.609 1.798-1.574 2.165-2.724-.951.564-2.005.974-3.127 1.195-.897-.957-2.178-1.555-3.594-1.555-3.179 0-5.515 2.966-4.797 6.045-4.091-.205-7.719-2.165-10.148-5.144-1.29 2.213-.669 5.108 1.523 6.574-.806-.026-1.566-.247-2.229-.616-.054 2.281 1.581 4.415 3.949 4.89-.693.188-1.452.232-2.224.084.626 1.956 2.444 3.379 4.6 3.419-2.07 1.623-4.678 2.348-7.29 2.04 2.179 1.397 4.768 2.212 7.548 2.212 9.142 0 14.307-7.721 13.995-14.646.962-.695 1.797-1.562 2.457-2.549z"/>
                   </svg>

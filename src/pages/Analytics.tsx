@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { 
   BarChart3, 
   TrendingUp, 
@@ -9,8 +10,13 @@ import {
   DollarSign,
   Calendar,
   PieChart,
-  Target
+  Target,
+  Download,
+  Share,
+  Filter,
+  X
 } from 'lucide-react';
+import { useToast } from '@/hooks/use-toast';
 import {
   LineChart,
   Line,
@@ -29,6 +35,8 @@ import {
 
 const Analytics = () => {
   const [selectedPeriod, setSelectedPeriod] = useState('6m');
+  const [showExportDialog, setShowExportDialog] = useState(false);
+  const { toast } = useToast();
 
   const monthlyData = [
     { month: 'Jul', receitas: 4200, gastos: 3100, economia: 1100 },
@@ -77,6 +85,36 @@ const Analytics = () => {
     { name: 'Fundo de Emergência', current: 8500, target: 12000, percentage: 71 },
   ];
 
+  const handleExportData = (format: string) => {
+    toast({
+      title: "Exportando dados...",
+      description: `Relatório em ${format.toUpperCase()} será baixado em breve.`,
+    });
+    setShowExportDialog(false);
+    
+    // Simular download
+    setTimeout(() => {
+      toast({
+        title: "Download concluído!",
+        description: "Seu relatório foi baixado com sucesso.",
+      });
+    }, 2000);
+  };
+
+  const handleShareReport = () => {
+    toast({
+      title: "Link copiado!",
+      description: "O link do relatório foi copiado para a área de transferência.",
+    });
+  };
+
+  const handleFilterData = () => {
+    toast({
+      title: "Filtros",
+      description: "Funcionalidade de filtros avançados será implementada.",
+    });
+  };
+
   return (
     <div className="min-h-screen bg-background">
       <div className="container mx-auto p-6 space-y-6">
@@ -100,6 +138,30 @@ const Analytics = () => {
                 {period === '1a' && '1 ano'}
               </Button>
             ))}
+            <Button 
+              variant="outline" 
+              size="sm"
+              onClick={handleFilterData}
+            >
+              <Filter className="h-4 w-4 mr-2" />
+              Filtros
+            </Button>
+            <Button 
+              variant="outline" 
+              size="sm"
+              onClick={() => setShowExportDialog(true)}
+            >
+              <Download className="h-4 w-4 mr-2" />
+              Exportar
+            </Button>
+            <Button 
+              variant="outline" 
+              size="sm"
+              onClick={handleShareReport}
+            >
+              <Share className="h-4 w-4 mr-2" />
+              Compartilhar
+            </Button>
           </div>
         </div>
 
@@ -294,6 +356,75 @@ const Analytics = () => {
             </div>
           </CardContent>
         </Card>
+        
+        {/* Modal de Exportação */}
+        <Dialog open={showExportDialog} onOpenChange={setShowExportDialog}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle className="flex items-center justify-between">
+                Exportar Relatório
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setShowExportDialog(false)}
+                >
+                  <X className="h-4 w-4" />
+                </Button>
+              </DialogTitle>
+            </DialogHeader>
+            <div className="space-y-4">
+              <p className="text-muted-foreground">
+                Escolha o formato para exportar seus dados financeiros:
+              </p>
+              
+              <div className="grid grid-cols-2 gap-4">
+                <Button 
+                  variant="outline" 
+                  className="h-20 flex flex-col gap-2"
+                  onClick={() => handleExportData('pdf')}
+                >
+                  <div className="p-2 rounded bg-red-100 text-red-600">
+                    PDF
+                  </div>
+                  <span className="text-sm">Relatório completo</span>
+                </Button>
+                
+                <Button 
+                  variant="outline" 
+                  className="h-20 flex flex-col gap-2"
+                  onClick={() => handleExportData('excel')}
+                >
+                  <div className="p-2 rounded bg-green-100 text-green-600">
+                    XLSX
+                  </div>
+                  <span className="text-sm">Planilha de dados</span>
+                </Button>
+                
+                <Button 
+                  variant="outline" 
+                  className="h-20 flex flex-col gap-2"
+                  onClick={() => handleExportData('csv')}
+                >
+                  <div className="p-2 rounded bg-blue-100 text-blue-600">
+                    CSV
+                  </div>
+                  <span className="text-sm">Dados tabulares</span>
+                </Button>
+                
+                <Button 
+                  variant="outline" 
+                  className="h-20 flex flex-col gap-2"
+                  onClick={() => handleExportData('json')}
+                >
+                  <div className="p-2 rounded bg-purple-100 text-purple-600">
+                    JSON
+                  </div>
+                  <span className="text-sm">Dados estruturados</span>
+                </Button>
+              </div>
+            </div>
+          </DialogContent>
+        </Dialog>
       </div>
     </div>
   );

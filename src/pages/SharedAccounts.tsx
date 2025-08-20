@@ -5,6 +5,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { 
   Users, 
   Plus, 
@@ -13,16 +14,19 @@ import {
   X, 
   DollarSign,
   UserPlus,
-  Mail
+  Mail,
+  Trash2
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 
 const SharedAccounts = () => {
   const [newInviteEmail, setNewInviteEmail] = useState('');
   const [selectedAccount, setSelectedAccount] = useState<string | null>(null);
+  const [showNewAccountDialog, setShowNewAccountDialog] = useState(false);
+  const [newAccountName, setNewAccountName] = useState('');
   const { toast } = useToast();
 
-  const sharedAccounts = [
+  const [sharedAccounts, setSharedAccounts] = useState([
     {
       id: '1',
       name: 'Conta da Casa',
@@ -44,9 +48,9 @@ const SharedAccounts = () => {
       ],
       pendingInvites: []
     }
-  ];
+  ]);
 
-  const pendingInvites = [
+  const [pendingInvites, setPendingInvites] = useState([
     {
       id: '1',
       accountName: 'Conta do Trabalho',
@@ -54,19 +58,33 @@ const SharedAccounts = () => {
       inviterEmail: 'pedro@empresa.com',
       inviteDate: '2024-01-15'
     }
-  ];
+  ]);
 
   const handleSendInvite = () => {
     if (newInviteEmail && selectedAccount) {
+      setSharedAccounts(prev => prev.map(account => 
+        account.id === selectedAccount 
+          ? { ...account, pendingInvites: [...account.pendingInvites, newInviteEmail] }
+          : account
+      ));
+      
       toast({
         title: "Convite enviado!",
         description: `Convite para ${newInviteEmail} foi enviado com sucesso.`,
       });
       setNewInviteEmail('');
+      setSelectedAccount(null);
+    } else {
+      toast({
+        title: "Erro",
+        description: "Selecione uma conta e digite um email válido.",
+        variant: "destructive"
+      });
     }
   };
 
   const handleAcceptInvite = (inviteId: string) => {
+    setPendingInvites(prev => prev.filter(invite => invite.id !== inviteId));
     toast({
       title: "Convite aceito!",
       description: "Você agora faz parte da conta compartilhada.",
@@ -74,9 +92,53 @@ const SharedAccounts = () => {
   };
 
   const handleRejectInvite = (inviteId: string) => {
+    setPendingInvites(prev => prev.filter(invite => invite.id !== inviteId));
     toast({
       title: "Convite recusado",
       description: "O convite foi recusado.",
+    });
+  };
+
+  const handleCreateAccount = () => {
+    if (!newAccountName.trim()) {
+      toast({
+        title: "Nome obrigatório",
+        description: "Digite um nome para a conta.",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    const newAccount = {
+      id: Date.now().toString(),
+      name: newAccountName,
+      balance: 0,
+      members: [
+        { id: '1', name: 'Você', email: 'voce@email.com', avatar: '', isOwner: true }
+      ],
+      pendingInvites: []
+    };
+
+    setSharedAccounts(prev => [...prev, newAccount]);
+    setNewAccountName('');
+    setShowNewAccountDialog(false);
+    
+    toast({
+      title: "Conta criada!",
+      description: "Nova conta compartilhada criada com sucesso.",
+    });
+  };
+
+  const handleRemovePendingInvite = (accountId: string, email: string) => {
+    setSharedAccounts(prev => prev.map(account => 
+      account.id === accountId 
+        ? { ...account, pendingInvites: account.pendingInvites.filter(invite => invite !== email) }
+        : account
+    ));
+    
+    toast({
+      title: "Convite cancelado",
+      description: "O convite foi cancelado com sucesso.",
     });
   };
 
@@ -89,10 +151,45 @@ const SharedAccounts = () => {
             <h1 className="text-3xl font-bold text-foreground">Contas Compartilhadas</h1>
             <p className="text-muted-foreground mt-1">Gerencie suas contas em grupo</p>
           </div>
-          <Button className="bg-gradient-primary">
-            <Plus className="h-4 w-4 mr-2" />
-            Nova Conta
-          </Button>
+          <Dialog open={showNewAccountDialog} onOpenChange={setShowNewAccountDialog}>
+            <DialogTrigger asChild>
+              <Button className="bg-gradient-primary">
+                <Plus className="h-4 w-4 mr-2" />
+                Nova Conta
+              </Button>
+            </DialogTrigger>
+            <DialogContent>
+              <DialogHeader>
+                <DialogTitle>Nova Conta Compartilhada</DialogTitle>
+              </DialogHeader>
+              <div className="space-y-4">
+                <div className="space-y-2">
+                  <Label htmlFor="account-name">Nome da Conta</Label>
+                  <Input
+                    id="account-name"
+                    placeholder="Ex: Conta da Casa"
+                    value={newAccountName}
+                    onChange={(e) => setNewAccountName(e.target.value)}
+                  />
+                </div>
+                <div className="flex gap-2">
+                  <Button 
+                    variant="outline" 
+                    className="flex-1"
+                    onClick={() => setShowNewAccountDialog(false)}
+                  >
+                    Cancelar
+                  </Button>
+                  <Button 
+                    className="flex-1 bg-gradient-primary"
+                    onClick={handleCreateAccount}
+                  >
+                    Criar Conta
+                  </Button>
+                </div>
+              </div>
+            </DialogContent>
+          </Dialog>
         </div>
 
         {/* Convites Pendentes */}
@@ -199,7 +296,16 @@ const SharedAccounts = () => {
                         {account.pendingInvites.map((email, index) => (
                           <div key={index} className="flex items-center justify-between p-2 rounded bg-muted">
                             <span className="text-sm">{email}</span>
-                            <Badge variant="outline" className="text-xs">Pendente</Badge>
+                            <div className="flex items-center gap-2">
+                              <Badge variant="outline" className="text-xs">Pendente</Badge>
+                              <Button 
+                                size="sm" 
+                                variant="ghost"
+                                onClick={() => handleRemovePendingInvite(account.id, email)}
+                              >
+                                <X className="h-3 w-3" />
+                              </Button>
+                            </div>
                           </div>
                         ))}
                       </div>
@@ -247,7 +353,10 @@ const SharedAccounts = () => {
               <p className="text-muted-foreground mb-4">
                 Organize suas finanças em grupo de forma simples e eficiente
               </p>
-              <Button className="bg-gradient-primary">
+              <Button 
+                className="bg-gradient-primary"
+                onClick={() => setShowNewAccountDialog(true)}
+              >
                 <Plus className="h-4 w-4 mr-2" />
                 Criar Conta
               </Button>

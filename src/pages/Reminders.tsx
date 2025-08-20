@@ -16,17 +16,19 @@ import {
   DollarSign,
   AlertTriangle,
   CheckCircle,
-  X
+  X,
+  Edit,
+  Trash2
 } from 'lucide-react';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { cn } from '@/lib/utils';
+import { useToast } from '@/hooks/use-toast';
 
 const Reminders = () => {
   const [selectedDate, setSelectedDate] = useState<Date>();
   const [showNewReminder, setShowNewReminder] = useState(false);
-
-  const reminders = [
+  const [reminders, setReminders] = useState([
     {
       id: '1',
       title: 'Conta de Luz',
@@ -67,8 +69,16 @@ const Reminders = () => {
       status: 'pending',
       priority: 'medium'
     }
-  ];
-
+  ]);
+  const [newReminder, setNewReminder] = useState({
+    title: '',
+    description: '',
+    amount: '',
+    category: '',
+    priority: ''
+  });
+  const { toast } = useToast();
+  
   const getCategoryColor = (category: string) => {
     const colors = {
       'utilities': 'bg-blue-100 text-blue-800',
@@ -84,6 +94,70 @@ const Reminders = () => {
     if (priority === 'high') return <AlertTriangle className="h-4 w-4 text-destructive" />;
     if (priority === 'medium') return <Clock className="h-4 w-4 text-warning" />;
     return <Clock className="h-4 w-4 text-muted-foreground" />;
+  };
+
+  const handleMarkAsPaid = (id: string) => {
+    setReminders(prev => prev.map(reminder => 
+      reminder.id === id ? { ...reminder, status: 'paid' } : reminder
+    ));
+    toast({
+      title: "Conta marcada como paga!",
+      description: "O lembrete foi atualizado com sucesso.",
+    });
+  };
+
+  const handleDeleteReminder = (id: string) => {
+    setReminders(prev => prev.filter(reminder => reminder.id !== id));
+    toast({
+      title: "Lembrete excluído",
+      description: "O lembrete foi removido com sucesso.",
+    });
+  };
+
+  const handleEditReminder = (id: string) => {
+    const reminder = reminders.find(r => r.id === id);
+    if (reminder) {
+      setNewReminder({
+        title: reminder.title,
+        description: reminder.description,
+        amount: reminder.amount.toString(),
+        category: reminder.category,
+        priority: reminder.priority
+      });
+      setShowNewReminder(true);
+    }
+  };
+
+  const handleCreateReminder = () => {
+    if (!newReminder.title || !newReminder.amount || !selectedDate) {
+      toast({
+        title: "Campos obrigatórios",
+        description: "Preencha título, valor e data de vencimento.",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    const reminder = {
+      id: Date.now().toString(),
+      title: newReminder.title,
+      description: newReminder.description,
+      amount: parseFloat(newReminder.amount),
+      dueDate: format(selectedDate, 'yyyy-MM-dd'),
+      category: newReminder.category || 'utilities',
+      status: 'pending' as const,
+      priority: newReminder.priority || 'medium'
+    };
+
+    setReminders(prev => [...prev, reminder]);
+    setNewReminder({ title: '', description: '', amount: '', category: '', priority: '' });
+    setSelectedDate(undefined);
+    setShowNewReminder(false);
+    
+    toast({
+      title: "Lembrete criado!",
+      description: "Novo lembrete adicionado com sucesso.",
+    });
   };
 
   const getDaysUntilDue = (dueDate: string) => {
@@ -218,11 +292,28 @@ const Reminders = () => {
                             </Badge>
                           )}
                           <div className="flex gap-2">
-                            <Button size="sm" className="bg-success hover:bg-success/90">
+                            <Button 
+                              size="sm" 
+                              className="bg-success hover:bg-success/90"
+                              onClick={() => handleMarkAsPaid(reminder.id)}
+                            >
+                              <CheckCircle className="h-4 w-4 mr-1" />
                               Marcar como Pago
                             </Button>
-                            <Button size="sm" variant="outline">
+                            <Button 
+                              size="sm" 
+                              variant="outline"
+                              onClick={() => handleEditReminder(reminder.id)}
+                            >
+                              <Edit className="h-4 w-4 mr-1" />
                               Editar
+                            </Button>
+                            <Button 
+                              size="sm" 
+                              variant="destructive"
+                              onClick={() => handleDeleteReminder(reminder.id)}
+                            >
+                              <Trash2 className="h-4 w-4" />
                             </Button>
                           </div>
                         </>
@@ -259,7 +350,12 @@ const Reminders = () => {
               <CardContent className="space-y-4">
                 <div className="space-y-2">
                   <Label htmlFor="title">Título</Label>
-                  <Input id="title" placeholder="Ex: Conta de Luz" />
+                  <Input 
+                    id="title" 
+                    placeholder="Ex: Conta de Luz"
+                    value={newReminder.title}
+                    onChange={(e) => setNewReminder(prev => ({ ...prev, title: e.target.value }))}
+                  />
                 </div>
                 
                 <div className="space-y-2">
@@ -268,6 +364,8 @@ const Reminders = () => {
                     id="description" 
                     placeholder="Descrição opcional..."
                     rows={2}
+                    value={newReminder.description}
+                    onChange={(e) => setNewReminder(prev => ({ ...prev, description: e.target.value }))}
                   />
                 </div>
                 
@@ -278,6 +376,8 @@ const Reminders = () => {
                     type="number" 
                     placeholder="0,00"
                     step="0.01"
+                    value={newReminder.amount}
+                    onChange={(e) => setNewReminder(prev => ({ ...prev, amount: e.target.value }))}
                   />
                 </div>
                 
@@ -313,7 +413,7 @@ const Reminders = () => {
                 
                 <div className="space-y-2">
                   <Label htmlFor="category">Categoria</Label>
-                  <Select>
+                  <Select value={newReminder.category} onValueChange={(value) => setNewReminder(prev => ({ ...prev, category: value }))}>
                     <SelectTrigger>
                       <SelectValue placeholder="Selecione uma categoria" />
                     </SelectTrigger>
@@ -329,7 +429,7 @@ const Reminders = () => {
                 
                 <div className="space-y-2">
                   <Label htmlFor="priority">Prioridade</Label>
-                  <Select>
+                  <Select value={newReminder.priority} onValueChange={(value) => setNewReminder(prev => ({ ...prev, priority: value }))}>
                     <SelectTrigger>
                       <SelectValue placeholder="Selecione a prioridade" />
                     </SelectTrigger>
@@ -349,7 +449,10 @@ const Reminders = () => {
                   >
                     Cancelar
                   </Button>
-                  <Button className="flex-1 bg-gradient-primary">
+                  <Button 
+                    className="flex-1 bg-gradient-primary"
+                    onClick={handleCreateReminder}
+                  >
                     Criar Lembrete
                   </Button>
                 </div>

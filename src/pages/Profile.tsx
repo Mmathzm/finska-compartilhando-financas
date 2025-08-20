@@ -68,6 +68,10 @@ const Profile = () => {
 
   const handleNotificationChange = (key: string, value: boolean) => {
     setNotifications(prev => ({ ...prev, [key]: value }));
+    toast({
+      title: "Configuração atualizada",
+      description: "Sua preferência de notificação foi salva.",
+    });
   };
 
   return (

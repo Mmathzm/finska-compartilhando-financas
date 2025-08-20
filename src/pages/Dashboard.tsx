@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import FinancialCard from '@/components/FinancialCard';
@@ -24,8 +25,12 @@ import {
   Bar
 } from 'recharts';
 
+import { useToast } from '@/hooks/use-toast';
+
 const Dashboard = () => {
   const [selectedPeriod, setSelectedPeriod] = useState('30d');
+  const navigate = useNavigate();
+  const { toast } = useToast();
 
   const expenseData = [
     { name: 'Jan', receitas: 4000, gastos: 2400 },
@@ -45,6 +50,23 @@ const Dashboard = () => {
     { day: 'Sáb', valor: 180 },
     { day: 'Dom', valor: 90 },
   ];
+
+  const handleQuickAction = (action: string) => {
+    switch (action) {
+      case 'new-transaction':
+        toast({
+          title: "Nova Transação",
+          description: "Funcionalidade será implementada com integração Supabase.",
+        });
+        break;
+      case 'invite-friend':
+        navigate('/shared-accounts');
+        break;
+      case 'new-reminder':
+        navigate('/reminders');
+        break;
+    }
+  };
 
   return (
     <div className="min-h-screen bg-background">
@@ -180,15 +202,27 @@ const Dashboard = () => {
           </CardHeader>
           <CardContent>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <Button className="h-auto p-4 flex flex-col items-center gap-2" variant="outline">
+              <Button 
+                className="h-auto p-4 flex flex-col items-center gap-2" 
+                variant="outline"
+                onClick={() => handleQuickAction('new-transaction')}
+              >
                 <Plus className="h-6 w-6" />
                 <span>Nova Transação</span>
               </Button>
-              <Button className="h-auto p-4 flex flex-col items-center gap-2" variant="outline">
+              <Button 
+                className="h-auto p-4 flex flex-col items-center gap-2" 
+                variant="outline"
+                onClick={() => handleQuickAction('invite-friend')}
+              >
                 <Users className="h-6 w-6" />
                 <span>Convidar Amigo</span>
               </Button>
-              <Button className="h-auto p-4 flex flex-col items-center gap-2" variant="outline">
+              <Button 
+                className="h-auto p-4 flex flex-col items-center gap-2" 
+                variant="outline"
+                onClick={() => handleQuickAction('new-reminder')}
+              >
                 <Bell className="h-6 w-6" />
                 <span>Novo Lembrete</span>
               </Button>

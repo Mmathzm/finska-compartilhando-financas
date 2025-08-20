@@ -3,6 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { 
   Heart, 
   Trophy, 
@@ -13,13 +14,15 @@ import {
   Zap,
   CheckCircle,
   Crown,
-  Flame
+  Flame,
+  X
 } from 'lucide-react';
+import { useToast } from '@/hooks/use-toast';
 
 const Motivation = () => {
   const [selectedChallenge, setSelectedChallenge] = useState<string | null>(null);
-
-  const achievements = [
+  const [showChallengeDetails, setShowChallengeDetails] = useState(false);
+  const [achievements, setAchievements] = useState([
     {
       id: '1',
       title: 'Primeiro Passo',
@@ -54,9 +57,10 @@ const Motivation = () => {
       earned: false,
       points: 500
     }
-  ];
+  ]);
+  const { toast } = useToast();
 
-  const challenges = [
+  const [challenges, setChallenges] = useState([
     {
       id: '1',
       title: 'Desafio 30 Dias Sem Supérfluos',
@@ -87,7 +91,7 @@ const Motivation = () => {
       difficulty: 'Fácil',
       category: 'Alimentação'
     }
-  ];
+  ]);
 
   const tips = [
     {
@@ -120,6 +124,40 @@ const Motivation = () => {
   ];
 
   const [currentQuote] = useState(motivationalQuotes[Math.floor(Math.random() * motivationalQuotes.length)]);
+
+  const handleCompleteChallenge = (challengeId: string) => {
+    const challenge = challenges.find(c => c.id === challengeId);
+    if (challenge && challenge.progress === challenge.total) {
+      setChallenges(prev => prev.filter(c => c.id !== challengeId));
+      
+      // Adicionar pontos fictícios
+      toast({
+        title: "Desafio Concluído! 🎉",
+        description: `Parabéns! Você ganhou ${challenge.reward} pontos!`,
+      });
+    }
+  };
+
+  const handleViewChallengeDetails = (challengeId: string) => {
+    setSelectedChallenge(challengeId);
+    setShowChallengeDetails(true);
+  };
+
+  const handleClaimAchievement = (achievementId: string) => {
+    setAchievements(prev => prev.map(achievement => 
+      achievement.id === achievementId 
+        ? { ...achievement, earned: true }
+        : achievement
+    ));
+    
+    const achievement = achievements.find(a => a.id === achievementId);
+    if (achievement) {
+      toast({
+        title: "Conquista Desbloqueada! 🏆",
+        description: `Você ganhou ${achievement.points} pontos!`,
+      });
+    }
+  };
 
   const getDifficultyColor = (difficulty: string) => {
     switch (difficulty) {
@@ -186,6 +224,15 @@ const Motivation = () => {
                         <p className="text-xs text-muted-foreground mt-1">
                           {achievement.progress}/{achievement.total}
                         </p>
+                        {achievement.progress === achievement.total && (
+                          <Button 
+                            size="sm" 
+                            className="mt-2 bg-warning text-warning-foreground"
+                            onClick={() => handleClaimAchievement(achievement.id)}
+                          >
+                            Resgatar
+                          </Button>
+                        )}
                       </div>
                     ) : (
                       <Badge variant="outline" className="mt-2">
@@ -240,11 +287,19 @@ const Motivation = () => {
                   </div>
                   
                   <div className="flex gap-2 mt-3">
-                    <Button size="sm" variant="outline">
+                    <Button 
+                      size="sm" 
+                      variant="outline"
+                      onClick={() => handleViewChallengeDetails(challenge.id)}
+                    >
                       Ver Detalhes
                     </Button>
                     {challenge.progress === challenge.total && (
-                      <Button size="sm" className="bg-success hover:bg-success/90">
+                      <Button 
+                        size="sm" 
+                        className="bg-success hover:bg-success/90"
+                        onClick={() => handleCompleteChallenge(challenge.id)}
+                      >
                         <CheckCircle className="h-4 w-4 mr-2" />
                         Concluir
                       </Button>
@@ -327,6 +382,77 @@ const Motivation = () => {
             </div>
           </CardContent>
         </Card>
+        
+        {/* Modal de Detalhes do Desafio */}
+        <Dialog open={showChallengeDetails} onOpenChange={setShowChallengeDetails}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle className="flex items-center justify-between">
+                Detalhes do Desafio
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setShowChallengeDetails(false)}
+                >
+                  <X className="h-4 w-4" />
+                </Button>
+              </DialogTitle>
+            </DialogHeader>
+            {selectedChallenge && (
+              <div className="space-y-4">
+                {(() => {
+                  const challenge = challenges.find(c => c.id === selectedChallenge);
+                  if (!challenge) return null;
+                  
+                  return (
+                    <>
+                      <div>
+                        <h3 className="font-semibold text-lg">{challenge.title}</h3>
+                        <p className="text-muted-foreground">{challenge.description}</p>
+                      </div>
+                      
+                      <div className="flex gap-2">
+                        <Badge className={getDifficultyColor(challenge.difficulty)}>
+                          {challenge.difficulty}
+                        </Badge>
+                        <Badge variant="outline">{challenge.category}</Badge>
+                      </div>
+                      
+                      <div className="space-y-2">
+                        <div className="flex items-center justify-between">
+                          <span>Progresso</span>
+                          <span>{challenge.progress}/{challenge.total}</span>
+                        </div>
+                        <Progress 
+                          value={(challenge.progress / challenge.total) * 100} 
+                          className="h-2" 
+                        />
+                      </div>
+                      
+                      <div className="flex items-center gap-2 text-warning">
+                        <Gift className="h-4 w-4" />
+                        <span className="font-medium">Recompensa: {challenge.reward} pontos</span>
+                      </div>
+                      
+                      {challenge.progress === challenge.total && (
+                        <Button 
+                          className="w-full bg-success hover:bg-success/90"
+                          onClick={() => {
+                            handleCompleteChallenge(challenge.id);
+                            setShowChallengeDetails(false);
+                          }}
+                        >
+                          <CheckCircle className="h-4 w-4 mr-2" />
+                          Concluir Desafio
+                        </Button>
+                      )}
+                    </>
+                  );
+                })()}
+              </div>
+            )}
+          </DialogContent>
+        </Dialog>
       </div>
     </div>
   );
