@@ -24,9 +24,15 @@ import {
   Trash2
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import PaymentMethodsModal from '@/components/PaymentMethodsModal';
+import PrivacySecurityModal from '@/components/PrivacySecurityModal';
+import AdvancedSettingsModal from '@/components/AdvancedSettingsModal';
 
 const Profile = () => {
   const [isEditing, setIsEditing] = useState(false);
+  const [showPaymentModal, setShowPaymentModal] = useState(false);
+  const [showPrivacyModal, setShowPrivacyModal] = useState(false);
+  const [showAdvancedModal, setShowAdvancedModal] = useState(false);
   const { toast } = useToast();
 
   const [profileData, setProfileData] = useState({
@@ -75,27 +81,15 @@ const Profile = () => {
   };
 
   const handlePaymentMethods = () => {
-    toast({
-      title: "Métodos de Pagamento",
-      description: "Abrindo configurações de pagamento...",
-    });
-    // Implementar modal ou navegação para métodos de pagamento
+    setShowPaymentModal(true);
   };
 
   const handlePrivacySecurity = () => {
-    toast({
-      title: "Privacidade e Segurança",
-      description: "Abrindo configurações de segurança...",
-    });
-    // Implementar modal ou navegação para privacidade
+    setShowPrivacyModal(true);
   };
 
   const handleAdvancedSettings = () => {
-    toast({
-      title: "Configurações Avançadas",
-      description: "Abrindo configurações avançadas...",
-    });
-    // Implementar modal ou navegação para configurações avançadas
+    setShowAdvancedModal(true);
   };
 
   const handleDeleteAccount = () => {
@@ -411,6 +405,20 @@ const Profile = () => {
             </Card>
           </div>
         </div>
+
+        {/* Modais */}
+        <PaymentMethodsModal 
+          open={showPaymentModal} 
+          onOpenChange={setShowPaymentModal} 
+        />
+        <PrivacySecurityModal 
+          open={showPrivacyModal} 
+          onOpenChange={setShowPrivacyModal} 
+        />
+        <AdvancedSettingsModal 
+          open={showAdvancedModal} 
+          onOpenChange={setShowAdvancedModal} 
+        />
       </div>
     </div>
   );
