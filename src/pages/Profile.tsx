@@ -74,6 +74,43 @@ const Profile = () => {
     });
   };
 
+  const handlePaymentMethods = () => {
+    toast({
+      title: "Métodos de Pagamento",
+      description: "Abrindo configurações de pagamento...",
+    });
+    // Implementar modal ou navegação para métodos de pagamento
+  };
+
+  const handlePrivacySecurity = () => {
+    toast({
+      title: "Privacidade e Segurança",
+      description: "Abrindo configurações de segurança...",
+    });
+    // Implementar modal ou navegação para privacidade
+  };
+
+  const handleAdvancedSettings = () => {
+    toast({
+      title: "Configurações Avançadas",
+      description: "Abrindo configurações avançadas...",
+    });
+    // Implementar modal ou navegação para configurações avançadas
+  };
+
+  const handleDeleteAccount = () => {
+    const confirmed = window.confirm(
+      "Tem certeza que deseja excluir sua conta? Esta ação não pode ser desfeita."
+    );
+    if (confirmed) {
+      toast({
+        title: "Conta excluída",
+        description: "Sua conta foi marcada para exclusão.",
+        variant: "destructive",
+      });
+    }
+  };
+
   return (
     <div className="min-h-screen bg-background">
       <div className="container mx-auto p-6 space-y-6">
@@ -337,20 +374,36 @@ const Profile = () => {
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-3">
-                <Button variant="outline" className="w-full justify-start">
+                <Button 
+                  variant="outline" 
+                  className="w-full justify-start"
+                  onClick={handlePaymentMethods}
+                >
                   <CreditCard className="h-4 w-4 mr-2" />
                   Métodos de Pagamento
                 </Button>
-                <Button variant="outline" className="w-full justify-start">
+                <Button 
+                  variant="outline" 
+                  className="w-full justify-start"
+                  onClick={handlePrivacySecurity}
+                >
                   <Shield className="h-4 w-4 mr-2" />
                   Privacidade e Segurança
                 </Button>
-                <Button variant="outline" className="w-full justify-start">
+                <Button 
+                  variant="outline" 
+                  className="w-full justify-start"
+                  onClick={handleAdvancedSettings}
+                >
                   <Settings className="h-4 w-4 mr-2" />
                   Configurações Avançadas
                 </Button>
                 <Separator />
-                <Button variant="destructive" className="w-full justify-start">
+                <Button 
+                  variant="destructive" 
+                  className="w-full justify-start"
+                  onClick={handleDeleteAccount}
+                >
                   <Trash2 className="h-4 w-4 mr-2" />
                   Excluir Conta
                 </Button>
