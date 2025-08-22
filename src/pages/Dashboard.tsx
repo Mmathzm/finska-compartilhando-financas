@@ -1,8 +1,10 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import FinancialCard from '@/components/FinancialCard';
+import TransactionModal from '@/components/TransactionModal';
+import TransactionHistory from '@/components/TransactionHistory';
 import { 
   DollarSign, 
   TrendingUp, 
@@ -27,8 +29,44 @@ import {
 
 import { useToast } from '@/hooks/use-toast';
 
+interface Transaction {
+  id: string;
+  type: 'income' | 'expense';
+  category: string;
+  description: string;
+  amount: number;
+  date: string;
+}
+
 const Dashboard = () => {
   const [selectedPeriod, setSelectedPeriod] = useState('30d');
+  const [showTransactionModal, setShowTransactionModal] = useState(false);
+  const [transactions, setTransactions] = useState<Transaction[]>([
+    {
+      id: '1',
+      type: 'expense',
+      category: 'Alimentação',
+      description: 'Compra no supermercado',
+      amount: 156.00,
+      date: new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString()
+    },
+    {
+      id: '2',
+      type: 'income',
+      category: 'Salário',
+      description: 'Salário mensal',
+      amount: 3500.00,
+      date: new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString()
+    },
+    {
+      id: '3',
+      type: 'expense',
+      category: 'Transporte',
+      description: 'Combustível',
+      amount: 80.00,
+      date: new Date(Date.now() - 48 * 60 * 60 * 1000).toISOString()
+    }
+  ]);
   const navigate = useNavigate();
   const { toast } = useToast();
 
@@ -109,13 +147,41 @@ const Dashboard = () => {
     });
   };
 
+  // Calculate financial summary from transactions
+  const financialSummary = useMemo(() => {
+    const totalIncome = transactions
+      .filter(t => t.type === 'income')
+      .reduce((sum, t) => sum + t.amount, 0);
+    
+    const totalExpenses = transactions
+      .filter(t => t.type === 'expense')
+      .reduce((sum, t) => sum + t.amount, 0);
+    
+    const balance = totalIncome - totalExpenses;
+    
+    return {
+      balance,
+      income: totalIncome,
+      expenses: totalExpenses
+    };
+  }, [transactions]);
+
+  const addTransaction = (newTransaction: Omit<Transaction, 'id'>) => {
+    const transaction: Transaction = {
+      ...newTransaction,
+      id: Date.now().toString()
+    };
+    setTransactions(prev => [transaction, ...prev]);
+  };
+
+  const deleteTransaction = (id: string) => {
+    setTransactions(prev => prev.filter(t => t.id !== id));
+  };
+
   const handleQuickAction = (action: string) => {
     switch (action) {
       case 'new-transaction':
-        toast({
-          title: "Nova Transação",
-          description: "Funcionalidade será implementada com integração Supabase.",
-        });
+        setShowTransactionModal(true);
         break;
       case 'invite-friend':
         navigate('/shared-accounts');
@@ -164,25 +230,25 @@ const Dashboard = () => {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
           <FinancialCard
             title="Saldo Total"
-            value="R$ 12.430,00"
+            value={`R$ ${financialSummary.balance.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`}
             icon={<DollarSign className="h-4 w-4" />}
-            trend={{ value: "8.2%", isPositive: true }}
+            trend={{ value: "8.2%", isPositive: financialSummary.balance > 0 }}
           />
           <FinancialCard
             title="Receitas"
-            value="R$ 5.670,00"
+            value={`R$ ${financialSummary.income.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`}
             icon={<TrendingUp className="h-4 w-4" />}
             trend={{ value: "12.5%", isPositive: true }}
           />
           <FinancialCard
             title="Gastos"
-            value="R$ 3.240,00"
+            value={`R$ ${financialSummary.expenses.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`}
             icon={<TrendingDown className="h-4 w-4" />}
             trend={{ value: "4.1%", isPositive: false }}
           />
           <FinancialCard
-            title="Contas Compartilhadas"
-            value="3 ativas"
+            title="Transações"
+            value={`${transactions.length} registros`}
             icon={<Users className="h-4 w-4" />}
           />
         </div>
@@ -288,38 +354,18 @@ const Dashboard = () => {
           </CardContent>
         </Card>
 
-        {/* Atividades Recentes */}
-        <Card className="shadow-card">
-          <CardHeader>
-            <CardTitle>Atividades Recentes</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-4">
-              {[
-                { type: 'expense', description: 'Compra no supermercado', value: 'R$ 156,00', time: '2 horas atrás' },
-                { type: 'income', description: 'Salário recebido', value: 'R$ 3.500,00', time: '1 dia atrás' },
-                { type: 'shared', description: 'João adicionou R$ 200 à conta compartilhada', value: 'R$ 200,00', time: '2 dias atrás' },
-              ].map((activity, index) => (
-                <div key={index} className="flex items-center justify-between p-3 rounded-lg bg-secondary/50">
-                  <div className="flex items-center gap-3">
-                    {activity.type === 'expense' && <ArrowDownRight className="h-4 w-4 text-destructive" />}
-                    {activity.type === 'income' && <ArrowUpRight className="h-4 w-4 text-success" />}
-                    {activity.type === 'shared' && <Users className="h-4 w-4 text-primary" />}
-                    <div>
-                      <p className="font-medium">{activity.description}</p>
-                      <p className="text-sm text-muted-foreground">{activity.time}</p>
-                    </div>
-                  </div>
-                  <span className={`font-bold ${
-                    activity.type === 'expense' ? 'text-destructive' : 'text-success'
-                  }`}>
-                    {activity.value}
-                  </span>
-                </div>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
+        {/* Transaction History */}
+        <TransactionHistory 
+          transactions={transactions}
+          onDeleteTransaction={deleteTransaction}
+        />
+
+        {/* Transaction Modal */}
+        <TransactionModal
+          open={showTransactionModal}
+          onOpenChange={setShowTransactionModal}
+          onAddTransaction={addTransaction}
+        />
       </div>
     </div>
   );
