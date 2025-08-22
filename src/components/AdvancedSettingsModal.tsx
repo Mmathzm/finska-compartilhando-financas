@@ -1,5 +1,6 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { useTheme } from '@/providers/ThemeProvider';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -17,15 +18,20 @@ interface AdvancedSettingsModalProps {
 
 const AdvancedSettingsModal = ({ open, onOpenChange }: AdvancedSettingsModalProps) => {
   const { toast } = useToast();
+  const { theme, setTheme } = useTheme();
   
   const [advancedSettings, setAdvancedSettings] = useState({
-    darkMode: false,
+    darkMode: theme === 'dark',
     autoSave: true,
     dataSync: true,
     animations: true,
     performance: true,
     debugMode: false
   });
+
+  useEffect(() => {
+    setAdvancedSettings(prev => ({ ...prev, darkMode: theme === 'dark' }));
+  }, [theme]);
 
   const [preferences, setPreferences] = useState({
     language: 'pt-BR',
@@ -41,11 +47,19 @@ const AdvancedSettingsModal = ({ open, onOpenChange }: AdvancedSettingsModalProp
   });
 
   const handleAdvancedSettingChange = (key: string, value: boolean) => {
-    setAdvancedSettings(prev => ({ ...prev, [key]: value }));
-    toast({
-      title: "Configuração atualizada",
-      description: `${key} foi ${value ? 'ativado' : 'desativado'}.`,
-    });
+    if (key === 'darkMode') {
+      setTheme(value ? 'dark' : 'light');
+      toast({
+        title: "Tema atualizado",
+        description: `Modo ${value ? 'escuro' : 'claro'} ativado.`,
+      });
+    } else {
+      setAdvancedSettings(prev => ({ ...prev, [key]: value }));
+      toast({
+        title: "Configuração atualizada",
+        description: `${key} foi ${value ? 'ativado' : 'desativado'}.`,
+      });
+    }
   };
 
   const handlePreferenceChange = (key: string, value: string) => {
