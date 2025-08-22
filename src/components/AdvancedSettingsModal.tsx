@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { useTheme } from '@/providers/ThemeProvider';
+import { useDebug } from '@/providers/DebugProvider';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -19,6 +20,7 @@ interface AdvancedSettingsModalProps {
 const AdvancedSettingsModal = ({ open, onOpenChange }: AdvancedSettingsModalProps) => {
   const { toast } = useToast();
   const { theme, setTheme } = useTheme();
+  const { isDebugMode, setDebugMode, debugLog } = useDebug();
   
   const [advancedSettings, setAdvancedSettings] = useState({
     darkMode: theme === 'dark',
@@ -26,12 +28,16 @@ const AdvancedSettingsModal = ({ open, onOpenChange }: AdvancedSettingsModalProp
     dataSync: true,
     animations: true,
     performance: true,
-    debugMode: false
+    debugMode: isDebugMode
   });
 
   useEffect(() => {
-    setAdvancedSettings(prev => ({ ...prev, darkMode: theme === 'dark' }));
-  }, [theme]);
+    setAdvancedSettings(prev => ({ 
+      ...prev, 
+      darkMode: theme === 'dark',
+      debugMode: isDebugMode 
+    }));
+  }, [theme, isDebugMode]);
 
   const [preferences, setPreferences] = useState({
     language: 'pt-BR',
@@ -52,6 +58,13 @@ const AdvancedSettingsModal = ({ open, onOpenChange }: AdvancedSettingsModalProp
       toast({
         title: "Tema atualizado",
         description: `Modo ${value ? 'escuro' : 'claro'} ativado.`,
+      });
+    } else if (key === 'debugMode') {
+      setDebugMode(value);
+      debugLog(`Modo debug ${value ? 'ativado' : 'desativado'}`, { timestamp: new Date() });
+      toast({
+        title: "Modo Debug atualizado",
+        description: `Modo debug foi ${value ? 'ativado' : 'desativado'}.`,
       });
     } else {
       setAdvancedSettings(prev => ({ ...prev, [key]: value }));
