@@ -32,24 +32,82 @@ const Dashboard = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
 
-  const expenseData = [
-    { name: 'Jan', receitas: 4000, gastos: 2400 },
-    { name: 'Fev', receitas: 3000, gastos: 1398 },
-    { name: 'Mar', receitas: 2000, gastos: 9800 },
-    { name: 'Abr', receitas: 2780, gastos: 3908 },
-    { name: 'Mai', receitas: 1890, gastos: 4800 },
-    { name: 'Jun', receitas: 2390, gastos: 3800 },
-  ];
+  // Data sets for different periods
+  const data7d = {
+    expense: [
+      { name: 'Seg', receitas: 850, gastos: 420 },
+      { name: 'Ter', receitas: 920, gastos: 350 },
+      { name: 'Qua', receitas: 780, gastos: 590 },
+      { name: 'Qui', receitas: 1100, gastos: 480 },
+      { name: 'Sex', receitas: 950, gastos: 620 },
+      { name: 'Sáb', receitas: 680, gastos: 380 },
+      { name: 'Dom', receitas: 520, gastos: 290 },
+    ],
+    daily: [
+      { day: 'Seg', valor: 420 },
+      { day: 'Ter', valor: 350 },
+      { day: 'Qua', valor: 590 },
+      { day: 'Qui', valor: 480 },
+      { day: 'Sex', valor: 620 },
+      { day: 'Sáb', valor: 380 },
+      { day: 'Dom', valor: 290 },
+    ]
+  };
 
-  const dailyData = [
-    { day: 'Seg', valor: 120 },
-    { day: 'Ter', valor: 80 },
-    { day: 'Qua', valor: 200 },
-    { day: 'Qui', valor: 150 },
-    { day: 'Sex', valor: 300 },
-    { day: 'Sáb', valor: 180 },
-    { day: 'Dom', valor: 90 },
-  ];
+  const data30d = {
+    expense: [
+      { name: 'Sem 1', receitas: 4000, gastos: 2400 },
+      { name: 'Sem 2', receitas: 3000, gastos: 1398 },
+      { name: 'Sem 3', receitas: 2000, gastos: 2800 },
+      { name: 'Sem 4', receitas: 2780, gastos: 1908 },
+    ],
+    daily: [
+      { day: 'Seg', valor: 120 },
+      { day: 'Ter', valor: 80 },
+      { day: 'Qua', valor: 200 },
+      { day: 'Qui', valor: 150 },
+      { day: 'Sex', valor: 300 },
+      { day: 'Sáb', valor: 180 },
+      { day: 'Dom', valor: 90 },
+    ]
+  };
+
+  const data90d = {
+    expense: [
+      { name: 'Jan', receitas: 12000, gastos: 8400 },
+      { name: 'Fev', receitas: 11500, gastos: 7800 },
+      { name: 'Mar', receitas: 13200, gastos: 9200 },
+    ],
+    daily: [
+      { day: 'Jan', valor: 8400 },
+      { day: 'Fev', valor: 7800 },
+      { day: 'Mar', valor: 9200 },
+    ]
+  };
+
+  // Get current data based on selected period
+  const getCurrentData = () => {
+    switch (selectedPeriod) {
+      case '7d':
+        return data7d;
+      case '30d':
+        return data30d;
+      case '90d':
+        return data90d;
+      default:
+        return data30d;
+    }
+  };
+
+  const currentData = getCurrentData();
+
+  const handlePeriodChange = (period: string) => {
+    setSelectedPeriod(period);
+    toast({
+      title: "Período Atualizado",
+      description: `Visualizando dados dos últimos ${period === '7d' ? '7 dias' : period === '30d' ? '30 dias' : '90 dias'}.`,
+    });
+  };
 
   const handleQuickAction = (action: string) => {
     switch (action) {
@@ -81,21 +139,21 @@ const Dashboard = () => {
             <Button 
               variant={selectedPeriod === '7d' ? 'default' : 'outline'} 
               size="sm"
-              onClick={() => setSelectedPeriod('7d')}
+              onClick={() => handlePeriodChange('7d')}
             >
               7 dias
             </Button>
             <Button 
               variant={selectedPeriod === '30d' ? 'default' : 'outline'} 
               size="sm"
-              onClick={() => setSelectedPeriod('30d')}
+              onClick={() => handlePeriodChange('30d')}
             >
               30 dias
             </Button>
             <Button 
               variant={selectedPeriod === '90d' ? 'default' : 'outline'} 
               size="sm"
-              onClick={() => setSelectedPeriod('90d')}
+              onClick={() => handlePeriodChange('90d')}
             >
               90 dias
             </Button>
@@ -141,7 +199,7 @@ const Dashboard = () => {
             </CardHeader>
             <CardContent>
               <ResponsiveContainer width="100%" height={300}>
-                <LineChart data={expenseData}>
+                <LineChart data={currentData.expense}>
                   <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
                   <XAxis dataKey="name" stroke="hsl(var(--muted-foreground))" />
                   <YAxis stroke="hsl(var(--muted-foreground))" />
@@ -174,7 +232,7 @@ const Dashboard = () => {
             </CardHeader>
             <CardContent>
               <ResponsiveContainer width="100%" height={300}>
-                <BarChart data={dailyData}>
+                <BarChart data={currentData.daily}>
                   <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
                   <XAxis dataKey="day" stroke="hsl(var(--muted-foreground))" />
                   <YAxis stroke="hsl(var(--muted-foreground))" />
