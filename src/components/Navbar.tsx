@@ -7,7 +7,8 @@ import {
   BarChart3, 
   User, 
   Home,
-  Heart
+  Heart,
+  ArrowRightLeft
 } from 'lucide-react';
 
 const Navbar = () => {
@@ -15,6 +16,7 @@ const Navbar = () => {
 
   const navItems = [
     { to: '/', icon: Home, label: 'Dashboard' },
+    { to: '/transactions', icon: ArrowRightLeft, label: 'Transações' },
     { to: '/shared-accounts', icon: Users, label: 'Contas Compartilhadas' },
     { to: '/reminders', icon: Bell, label: 'Lembretes' },
     { to: '/analytics', icon: BarChart3, label: 'Relatórios' },

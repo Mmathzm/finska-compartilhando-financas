@@ -8,6 +8,7 @@ import { DebugProvider } from "@/providers/DebugProvider";
 import Layout from "./components/Layout";
 import { DebugPanel } from "./components/DebugPanel";
 import Dashboard from "./pages/Dashboard";
+import Transactions from "./pages/Transactions";
 import SharedAccounts from "./pages/SharedAccounts";
 import Auth from "./pages/Auth";
 import Reminders from "./pages/Reminders";
@@ -31,6 +32,7 @@ const App = () => (
           <Route path="/auth" element={<Auth />} />
           <Route path="/" element={<Layout />}>
             <Route index element={<Dashboard />} />
+            <Route path="transactions" element={<Transactions />} />
             <Route path="shared-accounts" element={<SharedAccounts />} />
             <Route path="reminders" element={<Reminders />} />
             <Route path="analytics" element={<Analytics />} />
