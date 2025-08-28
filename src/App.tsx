@@ -15,6 +15,8 @@ import Reminders from "./pages/Reminders";
 import Analytics from "./pages/Analytics";
 import Motivation from "./pages/Motivation";
 import Profile from "./pages/Profile";
+import Expenses from "./pages/Expenses";
+import Income from "./pages/Income";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -38,6 +40,8 @@ const App = () => (
             <Route path="analytics" element={<Analytics />} />
             <Route path="motivation" element={<Motivation />} />
             <Route path="profile" element={<Profile />} />
+            <Route path="expenses" element={<Expenses />} />
+            <Route path="income" element={<Income />} />
           </Route>
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
