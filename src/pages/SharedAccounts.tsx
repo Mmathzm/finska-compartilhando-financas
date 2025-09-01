@@ -24,6 +24,9 @@ const SharedAccounts = () => {
   const [selectedAccount, setSelectedAccount] = useState<string | null>(null);
   const [showNewAccountDialog, setShowNewAccountDialog] = useState(false);
   const [newAccountName, setNewAccountName] = useState('');
+  const [showAddMoneyDialog, setShowAddMoneyDialog] = useState(false);
+  const [addMoneyAccountId, setAddMoneyAccountId] = useState<string | null>(null);
+  const [addMoneyAmount, setAddMoneyAmount] = useState('');
   const { toast } = useToast();
 
   const [sharedAccounts, setSharedAccounts] = useState([
@@ -142,6 +145,39 @@ const SharedAccounts = () => {
     });
   };
 
+  const handleAddMoney = () => {
+    const amount = parseFloat(addMoneyAmount);
+    
+    if (!addMoneyAccountId || !addMoneyAmount || amount <= 0) {
+      toast({
+        title: "Erro",
+        description: "Selecione uma conta e digite um valor válido.",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    setSharedAccounts(prev => prev.map(account => 
+      account.id === addMoneyAccountId 
+        ? { ...account, balance: account.balance + amount }
+        : account
+    ));
+    
+    toast({
+      title: "Dinheiro adicionado!",
+      description: `R$ ${amount.toLocaleString('pt-BR', { minimumFractionDigits: 2 })} foi adicionado à conta.`,
+    });
+    
+    setAddMoneyAmount('');
+    setAddMoneyAccountId(null);
+    setShowAddMoneyDialog(false);
+  };
+
+  const openAddMoneyDialog = (accountId: string) => {
+    setAddMoneyAccountId(accountId);
+    setShowAddMoneyDialog(true);
+  };
+
   return (
     <div className="min-h-screen bg-background">
       <div className="container mx-auto p-6 space-y-6">
@@ -191,6 +227,45 @@ const SharedAccounts = () => {
             </DialogContent>
           </Dialog>
         </div>
+
+        {/* Modal para Adicionar Dinheiro */}
+        <Dialog open={showAddMoneyDialog} onOpenChange={setShowAddMoneyDialog}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Adicionar Dinheiro</DialogTitle>
+            </DialogHeader>
+            <div className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="money-amount">Valor (R$)</Label>
+                <Input
+                  id="money-amount"
+                  type="number"
+                  placeholder="0,00"
+                  value={addMoneyAmount}
+                  onChange={(e) => setAddMoneyAmount(e.target.value)}
+                  min="0"
+                  step="0.01"
+                />
+              </div>
+              <div className="flex gap-2">
+                <Button 
+                  variant="outline" 
+                  className="flex-1"
+                  onClick={() => setShowAddMoneyDialog(false)}
+                >
+                  Cancelar
+                </Button>
+                <Button 
+                  className="flex-1 bg-gradient-primary"
+                  onClick={handleAddMoney}
+                >
+                  <DollarSign className="h-4 w-4 mr-2" />
+                  Adicionar
+                </Button>
+              </div>
+            </div>
+          </DialogContent>
+        </Dialog>
 
         {/* Convites Pendentes */}
         {pendingInvites.length > 0 && (
@@ -253,16 +328,27 @@ const SharedAccounts = () => {
               </CardHeader>
               <CardContent>
                 <div className="space-y-4">
-                  {/* Saldo */}
-                  <div className="p-4 rounded-lg bg-gradient-primary text-primary-foreground">
-                    <div className="flex items-center gap-2">
-                      <DollarSign className="h-5 w-5" />
-                      <span className="text-sm opacity-90">Saldo Atual</span>
-                    </div>
-                    <p className="text-2xl font-bold">
-                      R$ {account.balance.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
-                    </p>
-                  </div>
+                   {/* Saldo */}
+                   <div className="p-4 rounded-lg bg-gradient-primary text-primary-foreground">
+                     <div className="flex items-center justify-between">
+                       <div className="flex items-center gap-2">
+                         <DollarSign className="h-5 w-5" />
+                         <span className="text-sm opacity-90">Saldo Atual</span>
+                       </div>
+                       <Button 
+                         size="sm" 
+                         variant="secondary"
+                         onClick={() => openAddMoneyDialog(account.id)}
+                         className="bg-white/20 hover:bg-white/30 text-white border-0"
+                       >
+                         <Plus className="h-4 w-4 mr-1" />
+                         Adicionar
+                       </Button>
+                     </div>
+                     <p className="text-2xl font-bold">
+                       R$ {account.balance.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                     </p>
+                   </div>
 
                   {/* Membros */}
                   <div>
