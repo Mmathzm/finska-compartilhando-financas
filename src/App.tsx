@@ -7,8 +7,6 @@ import { ThemeProvider } from "@/providers/ThemeProvider";
 import { DebugProvider } from "@/providers/DebugProvider";
 import Layout from "./components/Layout";
 import { DebugPanel } from "./components/DebugPanel";
-import { ProtectedRoute } from "./components/ProtectedRoute";
-import Index from "./pages/Index";
 import Dashboard from "./pages/Dashboard";
 import Transactions from "./pages/Transactions";
 import SharedAccounts from "./pages/SharedAccounts";
@@ -33,10 +31,9 @@ const App = () => (
           <DebugPanel />
           <BrowserRouter>
         <Routes>
-          <Route path="/" element={<Index />} />
           <Route path="/auth" element={<Auth />} />
-          <Route path="/" element={<ProtectedRoute><Layout /></ProtectedRoute>}>
-            <Route path="dashboard" element={<Dashboard />} />
+          <Route path="/" element={<Layout />}>
+            <Route index element={<Dashboard />} />
             <Route path="transactions" element={<Transactions />} />
             <Route path="shared-accounts" element={<SharedAccounts />} />
             <Route path="reminders" element={<Reminders />} />

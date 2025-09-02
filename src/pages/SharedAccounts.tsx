@@ -15,27 +15,45 @@ import {
   DollarSign,
   UserPlus,
   Mail,
-  Trash2,
-  Loader2
+  Trash2
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-import { useSharedAccounts } from '@/hooks/useSharedAccounts';
 
 const SharedAccounts = () => {
-  const { sharedAccounts, loading, createSharedAccount, addMoneyToAccount } = useSharedAccounts();
   const [newInviteEmail, setNewInviteEmail] = useState('');
   const [selectedAccount, setSelectedAccount] = useState<string | null>(null);
   const [showNewAccountDialog, setShowNewAccountDialog] = useState(false);
   const [newAccountName, setNewAccountName] = useState('');
-  const [newAccountDescription, setNewAccountDescription] = useState('');
   const [showAddMoneyDialog, setShowAddMoneyDialog] = useState(false);
   const [addMoneyAccountId, setAddMoneyAccountId] = useState<string | null>(null);
   const [addMoneyAmount, setAddMoneyAmount] = useState('');
-  const [isCreating, setIsCreating] = useState(false);
   const { toast } = useToast();
 
-  // Mock data for pending invites (would come from real backend)
-  const [pendingInvites] = useState([
+  const [sharedAccounts, setSharedAccounts] = useState([
+    {
+      id: '1',
+      name: 'Conta da Casa',
+      balance: 2500.00,
+      members: [
+        { id: '1', name: 'Você', email: 'voce@email.com', avatar: '', isOwner: true },
+        { id: '2', name: 'Maria Silva', email: 'maria@email.com', avatar: '', isOwner: false },
+        { id: '3', name: 'João Santos', email: 'joao@email.com', avatar: '', isOwner: false },
+      ],
+      pendingInvites: ['carlos@email.com']
+    },
+    {
+      id: '2',
+      name: 'Viagem para Europa',
+      balance: 8300.00,
+      members: [
+        { id: '1', name: 'Você', email: 'voce@email.com', avatar: '', isOwner: true },
+        { id: '4', name: 'Ana Costa', email: 'ana@email.com', avatar: '', isOwner: false },
+      ],
+      pendingInvites: []
+    }
+  ]);
+
+  const [pendingInvites, setPendingInvites] = useState([
     {
       id: '1',
       accountName: 'Conta do Trabalho',
@@ -47,7 +65,12 @@ const SharedAccounts = () => {
 
   const handleSendInvite = () => {
     if (newInviteEmail && selectedAccount) {
-      // In a real app, this would send an API request
+      setSharedAccounts(prev => prev.map(account => 
+        account.id === selectedAccount 
+          ? { ...account, pendingInvites: [...account.pendingInvites, newInviteEmail] }
+          : account
+      ));
+      
       toast({
         title: "Convite enviado!",
         description: `Convite para ${newInviteEmail} foi enviado com sucesso.`,
@@ -64,7 +87,7 @@ const SharedAccounts = () => {
   };
 
   const handleAcceptInvite = (inviteId: string) => {
-    // In a real app, this would send an API request
+    setPendingInvites(prev => prev.filter(invite => invite.id !== inviteId));
     toast({
       title: "Convite aceito!",
       description: "Você agora faz parte da conta compartilhada.",
@@ -72,14 +95,14 @@ const SharedAccounts = () => {
   };
 
   const handleRejectInvite = (inviteId: string) => {
-    // In a real app, this would send an API request
+    setPendingInvites(prev => prev.filter(invite => invite.id !== inviteId));
     toast({
       title: "Convite recusado",
       description: "O convite foi recusado.",
     });
   };
 
-  const handleCreateAccount = async () => {
+  const handleCreateAccount = () => {
     if (!newAccountName.trim()) {
       toast({
         title: "Nome obrigatório",
@@ -89,21 +112,40 @@ const SharedAccounts = () => {
       return;
     }
 
-    setIsCreating(true);
-    const { error } = await createSharedAccount({
+    const newAccount = {
+      id: Date.now().toString(),
       name: newAccountName,
-      description: newAccountDescription
-    });
+      balance: 0,
+      members: [
+        { id: '1', name: 'Você', email: 'voce@email.com', avatar: '', isOwner: true }
+      ],
+      pendingInvites: []
+    };
+
+    setSharedAccounts(prev => [...prev, newAccount]);
+    setNewAccountName('');
+    setShowNewAccountDialog(false);
     
-    if (!error) {
-      setNewAccountName('');
-      setNewAccountDescription('');
-      setShowNewAccountDialog(false);
-    }
-    setIsCreating(false);
+    toast({
+      title: "Conta criada!",
+      description: "Nova conta compartilhada criada com sucesso.",
+    });
   };
 
-  const handleAddMoney = async () => {
+  const handleRemovePendingInvite = (accountId: string, email: string) => {
+    setSharedAccounts(prev => prev.map(account => 
+      account.id === accountId 
+        ? { ...account, pendingInvites: account.pendingInvites.filter(invite => invite !== email) }
+        : account
+    ));
+    
+    toast({
+      title: "Convite cancelado",
+      description: "O convite foi cancelado com sucesso.",
+    });
+  };
+
+  const handleAddMoney = () => {
     const amount = parseFloat(addMoneyAmount);
     
     if (!addMoneyAccountId || !addMoneyAmount || amount <= 0) {
@@ -115,13 +157,20 @@ const SharedAccounts = () => {
       return;
     }
 
-    const { error } = await addMoneyToAccount(addMoneyAccountId, amount);
+    setSharedAccounts(prev => prev.map(account => 
+      account.id === addMoneyAccountId 
+        ? { ...account, balance: account.balance + amount }
+        : account
+    ));
     
-    if (!error) {
-      setAddMoneyAmount('');
-      setAddMoneyAccountId(null);
-      setShowAddMoneyDialog(false);
-    }
+    toast({
+      title: "Dinheiro adicionado!",
+      description: `R$ ${amount.toLocaleString('pt-BR', { minimumFractionDigits: 2 })} foi adicionado à conta.`,
+    });
+    
+    setAddMoneyAmount('');
+    setAddMoneyAccountId(null);
+    setShowAddMoneyDialog(false);
   };
 
   const openAddMoneyDialog = (accountId: string) => {
@@ -159,37 +208,19 @@ const SharedAccounts = () => {
                     onChange={(e) => setNewAccountName(e.target.value)}
                   />
                 </div>
-                <div className="space-y-2">
-                  <Label htmlFor="account-description">Descrição (opcional)</Label>
-                  <Input
-                    id="account-description"
-                    placeholder="Ex: Gastos da família"
-                    value={newAccountDescription}
-                    onChange={(e) => setNewAccountDescription(e.target.value)}
-                  />
-                </div>
                 <div className="flex gap-2">
                   <Button 
                     variant="outline" 
                     className="flex-1"
                     onClick={() => setShowNewAccountDialog(false)}
-                    disabled={isCreating}
                   >
                     Cancelar
                   </Button>
                   <Button 
                     className="flex-1 bg-gradient-primary"
                     onClick={handleCreateAccount}
-                    disabled={isCreating}
                   >
-                    {isCreating ? (
-                      <>
-                        <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                        Criando...
-                      </>
-                    ) : (
-                      'Criar Conta'
-                    )}
+                    Criar Conta
                   </Button>
                 </div>
               </div>
@@ -280,145 +311,144 @@ const SharedAccounts = () => {
           </Card>
         )}
 
-        {/* Loading State */}
-        {loading ? (
-          <div className="flex items-center justify-center py-8">
-            <Loader2 className="h-8 w-8 animate-spin" />
-          </div>
-        ) : (
-          <>
-            {/* Minhas Contas */}
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-              {sharedAccounts.map((account) => (
-                <Card key={account.id} className="shadow-card">
-                  <CardHeader>
-                    <div className="flex items-center justify-between">
-                      <CardTitle className="flex items-center gap-2">
-                        <Users className="h-5 w-5 text-primary" />
-                        {account.name}
-                      </CardTitle>
-                      <Badge variant="secondary">
-                        {account.members?.length || 1} membros
-                      </Badge>
-                    </div>
-                    {account.description && (
-                      <p className="text-sm text-muted-foreground">{account.description}</p>
-                    )}
-                  </CardHeader>
-                  <CardContent>
-                    <div className="space-y-4">
-                       {/* Saldo */}
-                       <div className="p-4 rounded-lg bg-gradient-primary text-primary-foreground">
-                         <div className="flex items-center justify-between">
-                           <div className="flex items-center gap-2">
-                             <DollarSign className="h-5 w-5" />
-                             <span className="text-sm opacity-90">Saldo Atual</span>
-                           </div>
-                           <Button 
-                             size="sm" 
-                             variant="secondary"
-                             onClick={() => openAddMoneyDialog(account.id)}
-                             className="bg-white/20 hover:bg-white/30 text-white border-0"
-                           >
-                             <Plus className="h-4 w-4 mr-1" />
-                             Adicionar
-                           </Button>
-                         </div>
-                         <p className="text-2xl font-bold">
-                           R$ {account.balance.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
-                         </p>
+        {/* Minhas Contas */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          {sharedAccounts.map((account) => (
+            <Card key={account.id} className="shadow-card">
+              <CardHeader>
+                <div className="flex items-center justify-between">
+                  <CardTitle className="flex items-center gap-2">
+                    <Users className="h-5 w-5 text-primary" />
+                    {account.name}
+                  </CardTitle>
+                  <Badge variant="secondary">
+                    {account.members.length} membros
+                  </Badge>
+                </div>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-4">
+                   {/* Saldo */}
+                   <div className="p-4 rounded-lg bg-gradient-primary text-primary-foreground">
+                     <div className="flex items-center justify-between">
+                       <div className="flex items-center gap-2">
+                         <DollarSign className="h-5 w-5" />
+                         <span className="text-sm opacity-90">Saldo Atual</span>
                        </div>
+                       <Button 
+                         size="sm" 
+                         variant="secondary"
+                         onClick={() => openAddMoneyDialog(account.id)}
+                         className="bg-white/20 hover:bg-white/30 text-white border-0"
+                       >
+                         <Plus className="h-4 w-4 mr-1" />
+                         Adicionar
+                       </Button>
+                     </div>
+                     <p className="text-2xl font-bold">
+                       R$ {account.balance.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                     </p>
+                   </div>
 
-                      {/* Membros */}
-                      <div>
-                        <h4 className="font-semibold mb-3">Membros</h4>
-                        <div className="space-y-2">
-                          {account.members?.map((member) => (
-                            <div key={member.id} className="flex items-center justify-between">
-                              <div className="flex items-center gap-3">
-                                <Avatar className="h-8 w-8">
-                                  <AvatarFallback>
-                                    {member.profile?.display_name?.split(' ').map(n => n[0]).join('') || 'U'}
-                                  </AvatarFallback>
-                                </Avatar>
-                                <div>
-                                  <p className="font-medium">{member.profile?.display_name || 'Usuário'}</p>
-                                  <p className="text-xs text-muted-foreground">{member.user_id}</p>
-                                </div>
-                              </div>
-                              {member.role === 'owner' && (
-                                <Badge variant="outline" className="text-xs">Dono</Badge>
-                              )}
+                  {/* Membros */}
+                  <div>
+                    <h4 className="font-semibold mb-3">Membros</h4>
+                    <div className="space-y-2">
+                      {account.members.map((member) => (
+                        <div key={member.id} className="flex items-center justify-between">
+                          <div className="flex items-center gap-3">
+                            <Avatar className="h-8 w-8">
+                              <AvatarImage src={member.avatar} alt={member.name} />
+                              <AvatarFallback>{member.name.split(' ').map(n => n[0]).join('')}</AvatarFallback>
+                            </Avatar>
+                            <div>
+                              <p className="font-medium">{member.name}</p>
+                              <p className="text-xs text-muted-foreground">{member.email}</p>
                             </div>
-                          )) || (
-                            <div className="flex items-center gap-3">
-                              <Avatar className="h-8 w-8">
-                                <AvatarFallback>U</AvatarFallback>
-                              </Avatar>
-                              <div>
-                                <p className="font-medium">Você</p>
-                                <p className="text-xs text-muted-foreground">Proprietário</p>
-                              </div>
-                            </div>
+                          </div>
+                          {member.isOwner && (
+                            <Badge variant="outline" className="text-xs">Dono</Badge>
                           )}
                         </div>
-                      </div>
+                      ))}
+                    </div>
+                  </div>
 
-                      {/* Convidar Novo Membro */}
-                      <div className="border-t pt-4">
-                        <div className="flex gap-2">
-                          <div className="flex-1">
-                            <Label htmlFor={`invite-${account.id}`} className="sr-only">
-                              Email para convidar
-                            </Label>
-                            <Input
-                              id={`invite-${account.id}`}
-                              placeholder="Email para convidar"
-                              value={selectedAccount === account.id ? newInviteEmail : ''}
-                              onChange={(e) => {
-                                setNewInviteEmail(e.target.value);
-                                setSelectedAccount(account.id);
-                              }}
-                            />
+                  {/* Convites Pendentes */}
+                  {account.pendingInvites.length > 0 && (
+                    <div>
+                      <h4 className="font-semibold mb-3">Convites Pendentes</h4>
+                      <div className="space-y-2">
+                        {account.pendingInvites.map((email, index) => (
+                          <div key={index} className="flex items-center justify-between p-2 rounded bg-muted">
+                            <span className="text-sm">{email}</span>
+                            <div className="flex items-center gap-2">
+                              <Badge variant="outline" className="text-xs">Pendente</Badge>
+                              <Button 
+                                size="sm" 
+                                variant="ghost"
+                                onClick={() => handleRemovePendingInvite(account.id, email)}
+                              >
+                                <X className="h-3 w-3" />
+                              </Button>
+                            </div>
                           </div>
-                          <Button 
-                            size="sm"
-                            onClick={handleSendInvite}
-                            disabled={!newInviteEmail || selectedAccount !== account.id}
-                          >
-                            <Send className="h-4 w-4" />
-                          </Button>
-                        </div>
+                        ))}
                       </div>
                     </div>
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
+                  )}
 
-            {/* Criar Nova Conta quando não há contas */}
-            {sharedAccounts.length === 0 && (
-              <Card className="shadow-card border-dashed border-2 border-primary/30">
-                <CardContent className="p-8">
-                  <div className="text-center">
-                    <UserPlus className="h-12 w-12 text-primary mx-auto mb-4" />
-                    <h3 className="text-lg font-semibold mb-2">Criar Primeira Conta Compartilhada</h3>
-                    <p className="text-muted-foreground mb-4">
-                      Organize suas finanças em grupo de forma simples e eficiente
-                    </p>
-                    <Button 
-                      className="bg-gradient-primary"
-                      onClick={() => setShowNewAccountDialog(true)}
-                    >
-                      <Plus className="h-4 w-4 mr-2" />
-                      Criar Conta
-                    </Button>
+                  {/* Convidar Novo Membro */}
+                  <div className="border-t pt-4">
+                    <div className="flex gap-2">
+                      <div className="flex-1">
+                        <Label htmlFor={`invite-${account.id}`} className="sr-only">
+                          Email para convidar
+                        </Label>
+                        <Input
+                          id={`invite-${account.id}`}
+                          placeholder="Email para convidar"
+                          value={selectedAccount === account.id ? newInviteEmail : ''}
+                          onChange={(e) => {
+                            setNewInviteEmail(e.target.value);
+                            setSelectedAccount(account.id);
+                          }}
+                        />
+                      </div>
+                      <Button 
+                        size="sm"
+                        onClick={handleSendInvite}
+                        disabled={!newInviteEmail || selectedAccount !== account.id}
+                      >
+                        <Send className="h-4 w-4" />
+                      </Button>
+                    </div>
                   </div>
-                </CardContent>
-              </Card>
-            )}
-          </>
-        )}
+                </div>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+
+        {/* Criar Nova Conta */}
+        <Card className="shadow-card border-dashed border-2 border-primary/30">
+          <CardContent className="p-8">
+            <div className="text-center">
+              <UserPlus className="h-12 w-12 text-primary mx-auto mb-4" />
+              <h3 className="text-lg font-semibold mb-2">Criar Nova Conta Compartilhada</h3>
+              <p className="text-muted-foreground mb-4">
+                Organize suas finanças em grupo de forma simples e eficiente
+              </p>
+              <Button 
+                className="bg-gradient-primary"
+                onClick={() => setShowNewAccountDialog(true)}
+              >
+                <Plus className="h-4 w-4 mr-2" />
+                Criar Conta
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
       </div>
     </div>
   );
