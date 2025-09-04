@@ -6,52 +6,28 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/hooks/use-toast';
-
-interface Transaction {
-  id: string;
-  type: 'income' | 'expense';
-  category: string;
-  description: string;
-  amount: number;
-  date: string;
-}
+import { TransactionInput } from '@/hooks/useTransactions';
+import { Category } from '@/hooks/useCategories';
 
 interface TransactionModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  onAddTransaction: (transaction: Omit<Transaction, 'id'>) => void;
+  onAddTransaction: (transaction: TransactionInput) => Promise<any>;
+  categories: Category[];
 }
 
-const TransactionModal = ({ open, onOpenChange, onAddTransaction }: TransactionModalProps) => {
+const TransactionModal = ({ open, onOpenChange, onAddTransaction, categories }: TransactionModalProps) => {
   const [type, setType] = useState<'income' | 'expense'>('expense');
-  const [category, setCategory] = useState('');
+  const [categoryId, setCategoryId] = useState('');
   const [description, setDescription] = useState('');
   const [amount, setAmount] = useState('');
+  const [loading, setLoading] = useState(false);
   const { toast } = useToast();
 
-  const incomeCategories = [
-    'Salário',
-    'Freelance',
-    'Investimentos',
-    'Vendas',
-    'Outros'
-  ];
-
-  const expenseCategories = [
-    'Alimentação',
-    'Transporte',
-    'Moradia',
-    'Saúde',
-    'Entretenimento',
-    'Compras',
-    'Educação',
-    'Outros'
-  ];
-
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!category || !description || !amount) {
+    if (!categoryId || !description || !amount) {
       toast({
         title: "Erro",
         description: "Por favor, preencha todos os campos obrigatórios.",
@@ -60,30 +36,31 @@ const TransactionModal = ({ open, onOpenChange, onAddTransaction }: TransactionM
       return;
     }
 
-    const transaction = {
-      type,
-      category,
-      description,
-      amount: parseFloat(amount),
-      date: new Date().toISOString()
-    };
+    setLoading(true);
+    try {
+      const transaction: TransactionInput = {
+        type,
+        category_id: categoryId,
+        description,
+        amount: parseFloat(amount)
+      };
 
-    onAddTransaction(transaction);
-    
-    // Reset form
-    setCategory('');
-    setDescription('');
-    setAmount('');
-    
-    toast({
-      title: "Transação Adicionada",
-      description: `${type === 'income' ? 'Receita' : 'Gasto'} de R$ ${amount} foi registrado com sucesso.`,
-    });
-    
-    onOpenChange(false);
+      await onAddTransaction(transaction);
+      
+      // Reset form
+      setCategoryId('');
+      setDescription('');
+      setAmount('');
+      
+      onOpenChange(false);
+    } catch (error) {
+      // Error already handled in hook
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const categories = type === 'income' ? incomeCategories : expenseCategories;
+  const filteredCategories = categories.filter(cat => cat.type === type);
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -111,14 +88,17 @@ const TransactionModal = ({ open, onOpenChange, onAddTransaction }: TransactionM
 
           <div className="space-y-2">
             <Label htmlFor="category">Categoria</Label>
-            <Select value={category} onValueChange={setCategory}>
+            <Select value={categoryId} onValueChange={setCategoryId}>
               <SelectTrigger>
                 <SelectValue placeholder="Selecione uma categoria" />
               </SelectTrigger>
               <SelectContent>
-                {categories.map((cat) => (
-                  <SelectItem key={cat} value={cat}>
-                    {cat}
+                {filteredCategories.map((cat) => (
+                  <SelectItem key={cat.id} value={cat.id}>
+                    <span className="flex items-center gap-2">
+                      <span>{cat.icon}</span>
+                      {cat.name}
+                    </span>
                   </SelectItem>
                 ))}
               </SelectContent>
@@ -148,11 +128,11 @@ const TransactionModal = ({ open, onOpenChange, onAddTransaction }: TransactionM
           </div>
 
           <DialogFooter>
-            <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
+            <Button type="button" variant="outline" onClick={() => onOpenChange(false)} disabled={loading}>
               Cancelar
             </Button>
-            <Button type="submit">
-              Adicionar Transação
+            <Button type="submit" disabled={loading}>
+              {loading ? 'Adicionando...' : 'Adicionar Transação'}
             </Button>
           </DialogFooter>
         </form>

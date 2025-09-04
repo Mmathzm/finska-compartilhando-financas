@@ -28,47 +28,18 @@ import {
 } from 'recharts';
 
 import { useToast } from '@/hooks/use-toast';
-
-interface Transaction {
-  id: string;
-  type: 'income' | 'expense';
-  category: string;
-  description: string;
-  amount: number;
-  date: string;
-}
+import { useTransactions } from '@/hooks/useTransactions';
+import { useCategories } from '@/hooks/useCategories';
+import { useAuth } from '@/hooks/useAuth';
 
 const Dashboard = () => {
   const [selectedPeriod, setSelectedPeriod] = useState('30d');
   const [showTransactionModal, setShowTransactionModal] = useState(false);
-  const [transactions, setTransactions] = useState<Transaction[]>([
-    {
-      id: '1',
-      type: 'expense',
-      category: 'Alimentação',
-      description: 'Compra no supermercado',
-      amount: 156.00,
-      date: new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString()
-    },
-    {
-      id: '2',
-      type: 'income',
-      category: 'Salário',
-      description: 'Salário mensal',
-      amount: 3500.00,
-      date: new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString()
-    },
-    {
-      id: '3',
-      type: 'expense',
-      category: 'Transporte',
-      description: 'Combustível',
-      amount: 80.00,
-      date: new Date(Date.now() - 48 * 60 * 60 * 1000).toISOString()
-    }
-  ]);
   const navigate = useNavigate();
   const { toast } = useToast();
+  const { transactions, loading: transactionsLoading, addTransaction, deleteTransaction } = useTransactions();
+  const { categories } = useCategories();
+  const { user } = useAuth();
 
   // Data sets for different periods
   const data7d = {
@@ -151,11 +122,11 @@ const Dashboard = () => {
   const financialSummary = useMemo(() => {
     const totalIncome = transactions
       .filter(t => t.type === 'income')
-      .reduce((sum, t) => sum + t.amount, 0);
+      .reduce((sum, t) => sum + Number(t.amount), 0);
     
     const totalExpenses = transactions
       .filter(t => t.type === 'expense')
-      .reduce((sum, t) => sum + t.amount, 0);
+      .reduce((sum, t) => sum + Number(t.amount), 0);
     
     const balance = totalIncome - totalExpenses;
     
@@ -165,18 +136,6 @@ const Dashboard = () => {
       expenses: totalExpenses
     };
   }, [transactions]);
-
-  const addTransaction = (newTransaction: Omit<Transaction, 'id'>) => {
-    const transaction: Transaction = {
-      ...newTransaction,
-      id: Date.now().toString()
-    };
-    setTransactions(prev => [transaction, ...prev]);
-  };
-
-  const deleteTransaction = (id: string) => {
-    setTransactions(prev => prev.filter(t => t.id !== id));
-  };
 
   const handleQuickAction = (action: string) => {
     switch (action) {
@@ -356,7 +315,14 @@ const Dashboard = () => {
 
         {/* Transaction History */}
         <TransactionHistory 
-          transactions={transactions}
+          transactions={transactions.map(t => ({
+            id: t.id,
+            type: t.type,
+            category: t.category?.name || 'Sem categoria',
+            description: t.description || '',
+            amount: Number(t.amount),
+            date: t.date
+          }))}
           onDeleteTransaction={deleteTransaction}
         />
 
@@ -365,6 +331,7 @@ const Dashboard = () => {
           open={showTransactionModal}
           onOpenChange={setShowTransactionModal}
           onAddTransaction={addTransaction}
+          categories={categories}
         />
       </div>
     </div>
