@@ -287,6 +287,14 @@ export type Database = {
         Args: { user_uuid: string }
         Returns: undefined
       }
+      is_shared_account_member: {
+        Args: { account_id: string }
+        Returns: boolean
+      }
+      is_shared_account_owner: {
+        Args: { account_id: string }
+        Returns: boolean
+      }
     }
     Enums: {
       account_role: "owner" | "member"

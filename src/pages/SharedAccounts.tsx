@@ -15,9 +15,12 @@ import {
   DollarSign,
   UserPlus,
   Mail,
-  Trash2
+  Trash2,
+  Loader2
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import { useSharedAccounts } from '@/hooks/useSharedAccounts';
+import { useAuth } from '@/hooks/useAuth';
 
 const SharedAccounts = () => {
   const [newInviteEmail, setNewInviteEmail] = useState('');
@@ -27,9 +30,13 @@ const SharedAccounts = () => {
   const [showAddMoneyDialog, setShowAddMoneyDialog] = useState(false);
   const [addMoneyAccountId, setAddMoneyAccountId] = useState<string | null>(null);
   const [addMoneyAmount, setAddMoneyAmount] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
+  const { user } = useAuth();
+  const { sharedAccounts, loading, createSharedAccount, addMoneyToAccount } = useSharedAccounts();
 
-  const [sharedAccounts, setSharedAccounts] = useState([
+  // Mock data for demo - in production this would come from the hook
+  const mockAccounts = [
     {
       id: '1',
       name: 'Conta da Casa',
@@ -37,21 +44,10 @@ const SharedAccounts = () => {
       members: [
         { id: '1', name: 'Você', email: 'voce@email.com', avatar: '', isOwner: true },
         { id: '2', name: 'Maria Silva', email: 'maria@email.com', avatar: '', isOwner: false },
-        { id: '3', name: 'João Santos', email: 'joao@email.com', avatar: '', isOwner: false },
       ],
       pendingInvites: ['carlos@email.com']
-    },
-    {
-      id: '2',
-      name: 'Viagem para Europa',
-      balance: 8300.00,
-      members: [
-        { id: '1', name: 'Você', email: 'voce@email.com', avatar: '', isOwner: true },
-        { id: '4', name: 'Ana Costa', email: 'ana@email.com', avatar: '', isOwner: false },
-      ],
-      pendingInvites: []
     }
-  ]);
+  ];
 
   const [pendingInvites, setPendingInvites] = useState([
     {

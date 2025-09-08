@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
+import { useAuth } from '@/hooks/useAuth';
 
 export interface Transaction {
   id: string;
@@ -31,9 +32,15 @@ export const useTransactions = () => {
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [loading, setLoading] = useState(true);
   const { toast } = useToast();
+  const { user } = useAuth();
 
   // Fetch transactions
   const fetchTransactions = async () => {
+    if (!user) {
+      setLoading(false);
+      return;
+    }
+
     try {
       setLoading(true);
       const { data, error } = await supabase
@@ -158,7 +165,7 @@ export const useTransactions = () => {
 
   useEffect(() => {
     fetchTransactions();
-  }, []);
+  }, [user]); // Re-fetch when user changes
 
   return {
     transactions,

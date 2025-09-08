@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
+import { useAuth } from '@/hooks/useAuth';
 
 export interface Category {
   id: string;
@@ -23,9 +24,15 @@ export const useCategories = () => {
   const [categories, setCategories] = useState<Category[]>([]);
   const [loading, setLoading] = useState(true);
   const { toast } = useToast();
+  const { user } = useAuth();
 
   // Fetch categories
   const fetchCategories = async () => {
+    if (!user) {
+      setLoading(false);
+      return;
+    }
+
     try {
       setLoading(true);
       const { data, error } = await supabase
@@ -92,7 +99,7 @@ export const useCategories = () => {
 
   useEffect(() => {
     fetchCategories();
-  }, []);
+  }, [user]); // Re-fetch when user changes
 
   return {
     categories,

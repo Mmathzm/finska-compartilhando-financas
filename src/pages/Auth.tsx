@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -8,6 +8,7 @@ import { Separator } from '@/components/ui/separator';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { CreditCard, Mail, Lock, User, Eye, EyeOff } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import { useAuth } from '@/hooks/useAuth';
 
 const Auth = () => {
   const [showPassword, setShowPassword] = useState(false);
@@ -15,6 +16,7 @@ const Auth = () => {
   const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate();
   const { toast } = useToast();
+  const { signIn, signUp, user, loading } = useAuth();
   
   const [loginData, setLoginData] = useState({ email: '', password: '' });
   const [registerData, setRegisterData] = useState({ 
@@ -23,6 +25,13 @@ const Auth = () => {
     password: '', 
     confirmPassword: '' 
   });
+
+  // Redirect if already authenticated
+  useEffect(() => {
+    if (user && !loading) {
+      navigate('/');
+    }
+  }, [user, loading, navigate]);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -38,15 +47,14 @@ const Auth = () => {
 
     setIsLoading(true);
     
-    // Simular login (substituir pela integração Supabase)
-    setTimeout(() => {
+    try {
+      await signIn(loginData.email, loginData.password);
+      // Navigation will happen automatically via useEffect when user state updates
+    } catch (error) {
+      // Error handling is done in the useAuth hook
+    } finally {
       setIsLoading(false);
-      toast({
-        title: "Login realizado!",
-        description: "Bem-vindo ao Finska!",
-      });
-      navigate('/');
-    }, 1500);
+    }
   };
 
   const handleRegister = async (e: React.FormEvent) => {
@@ -70,17 +78,25 @@ const Auth = () => {
       return;
     }
 
+    if (registerData.password.length < 6) {
+      toast({
+        title: "Senha muito fraca",
+        description: "A senha deve ter pelo menos 6 caracteres.",
+        variant: "destructive"
+      });
+      return;
+    }
+
     setIsLoading(true);
     
-    // Simular registro (substituir pela integração Supabase)
-    setTimeout(() => {
+    try {
+      await signUp(registerData.email, registerData.password, registerData.name);
+      // Navigation will happen automatically via useEffect when user state updates
+    } catch (error) {
+      // Error handling is done in the useAuth hook
+    } finally {
       setIsLoading(false);
-      toast({
-        title: "Conta criada!",
-        description: "Sua conta foi criada com sucesso!",
-      });
-      navigate('/');
-    }, 1500);
+    }
   };
 
   const handleSocialLogin = (provider: string) => {
