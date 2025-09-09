@@ -5,6 +5,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { ThemeProvider } from "@/providers/ThemeProvider";
 import { DebugProvider } from "@/providers/DebugProvider";
+import { SecurityWrapper } from "@/components/SecurityWrapper";
 import Layout from "./components/Layout";
 import { DebugPanel } from "./components/DebugPanel";
 import ProtectedRoute from "./components/ProtectedRoute";
@@ -26,7 +27,8 @@ const App = () => (
   <QueryClientProvider client={queryClient}>
     <ThemeProvider defaultTheme="light" storageKey="finska-ui-theme">
       <DebugProvider>
-        <TooltipProvider>
+        <SecurityWrapper>
+          <TooltipProvider>
           <Toaster />
           <Sonner />
           <DebugPanel />
@@ -52,7 +54,8 @@ const App = () => (
           <Route path="*" element={<NotFound />} />
         </Routes>
           </BrowserRouter>
-        </TooltipProvider>
+          </TooltipProvider>
+        </SecurityWrapper>
       </DebugProvider>
     </ThemeProvider>
   </QueryClientProvider>

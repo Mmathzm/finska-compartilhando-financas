@@ -22,6 +22,22 @@ import { useToast } from '@/hooks/use-toast';
 import { useSharedAccounts } from '@/hooks/useSharedAccounts';
 import { useAuth } from '@/hooks/useAuth';
 
+interface MockMember {
+  id: string;
+  name: string;
+  email: string;
+  avatar: string;
+  isOwner: boolean;
+}
+
+interface MockAccount {
+  id: string;
+  name: string;
+  balance: number;
+  members: MockMember[];
+  pendingInvites: string[];
+}
+
 const SharedAccounts = () => {
   const [newInviteEmail, setNewInviteEmail] = useState('');
   const [selectedAccount, setSelectedAccount] = useState<string | null>(null);
@@ -35,8 +51,8 @@ const SharedAccounts = () => {
   const { user } = useAuth();
   const { sharedAccounts, loading, createSharedAccount, addMoneyToAccount } = useSharedAccounts();
 
-  // Mock data for demo - in production this would come from the hook
-  const mockAccounts = [
+  // Mock data for demo - replace with real data when ready
+  const [mockAccounts, setMockAccounts] = useState<MockAccount[]>([
     {
       id: '1',
       name: 'Conta da Casa',
@@ -47,7 +63,7 @@ const SharedAccounts = () => {
       ],
       pendingInvites: ['carlos@email.com']
     }
-  ];
+  ]);
 
   const [pendingInvites, setPendingInvites] = useState([
     {
@@ -61,7 +77,7 @@ const SharedAccounts = () => {
 
   const handleSendInvite = () => {
     if (newInviteEmail && selectedAccount) {
-      setSharedAccounts(prev => prev.map(account => 
+      setMockAccounts(prev => prev.map(account => 
         account.id === selectedAccount 
           ? { ...account, pendingInvites: [...account.pendingInvites, newInviteEmail] }
           : account
@@ -108,7 +124,7 @@ const SharedAccounts = () => {
       return;
     }
 
-    const newAccount = {
+    const newAccount: MockAccount = {
       id: Date.now().toString(),
       name: newAccountName,
       balance: 0,
@@ -118,7 +134,7 @@ const SharedAccounts = () => {
       pendingInvites: []
     };
 
-    setSharedAccounts(prev => [...prev, newAccount]);
+    setMockAccounts(prev => [...prev, newAccount]);
     setNewAccountName('');
     setShowNewAccountDialog(false);
     
@@ -129,7 +145,7 @@ const SharedAccounts = () => {
   };
 
   const handleRemovePendingInvite = (accountId: string, email: string) => {
-    setSharedAccounts(prev => prev.map(account => 
+    setMockAccounts(prev => prev.map(account => 
       account.id === accountId 
         ? { ...account, pendingInvites: account.pendingInvites.filter(invite => invite !== email) }
         : account
@@ -153,7 +169,7 @@ const SharedAccounts = () => {
       return;
     }
 
-    setSharedAccounts(prev => prev.map(account => 
+    setMockAccounts(prev => prev.map(account => 
       account.id === addMoneyAccountId 
         ? { ...account, balance: account.balance + amount }
         : account
@@ -309,7 +325,7 @@ const SharedAccounts = () => {
 
         {/* Minhas Contas */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          {sharedAccounts.map((account) => (
+          {mockAccounts.map((account) => (
             <Card key={account.id} className="shadow-card">
               <CardHeader>
                 <div className="flex items-center justify-between">
