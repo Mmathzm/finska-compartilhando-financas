@@ -9,6 +9,8 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { CreditCard, Mail, Lock, User, Eye, EyeOff } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/hooks/useAuth';
+import { useInputValidation } from '@/hooks/useInputValidation';
+import { useErrorHandler } from '@/hooks/useErrorHandler';
 
 const Auth = () => {
   const [showPassword, setShowPassword] = useState(false);
@@ -17,6 +19,8 @@ const Auth = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
   const { signIn, signUp, user, loading } = useAuth();
+  const { validateEmail, sanitizeText } = useInputValidation();
+  const { handleAsyncError } = useErrorHandler();
   
   const [loginData, setLoginData] = useState({ email: '', password: '' });
   const [registerData, setRegisterData] = useState({ 
@@ -36,10 +40,21 @@ const Auth = () => {
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!loginData.email || !loginData.password) {
+    // Validate input
+    const emailValidation = validateEmail(loginData.email);
+    if (!emailValidation.isValid) {
       toast({
-        title: "Campos obrigatórios",
-        description: "Preencha email e senha.",
+        title: "Email inválido",
+        description: emailValidation.errors[0],
+        variant: "destructive"
+      });
+      return;
+    }
+
+    if (!loginData.password || loginData.password.length < 6) {
+      toast({
+        title: "Senha inválida",
+        description: "A senha deve ter pelo menos 6 caracteres.",
         variant: "destructive"
       });
       return;
@@ -47,23 +62,42 @@ const Auth = () => {
 
     setIsLoading(true);
     
-    try {
-      await signIn(loginData.email, loginData.password);
-      // Navigation will happen automatically via useEffect when user state updates
-    } catch (error) {
-      // Error handling is done in the useAuth hook
-    } finally {
-      setIsLoading(false);
-    }
+    await handleAsyncError(async () => {
+      await signIn(loginData.email.trim(), loginData.password);
+    }, 'Login attempt');
+    
+    setIsLoading(false);
   };
 
   const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!registerData.name || !registerData.email || !registerData.password) {
+    // Sanitize and validate inputs
+    const sanitizedName = sanitizeText(registerData.name);
+    const emailValidation = validateEmail(registerData.email);
+    
+    if (!sanitizedName || sanitizedName.length < 2) {
       toast({
-        title: "Campos obrigatórios",
-        description: "Preencha todos os campos obrigatórios.",
+        title: "Nome inválido",
+        description: "O nome deve ter pelo menos 2 caracteres.",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    if (!emailValidation.isValid) {
+      toast({
+        title: "Email inválido",
+        description: emailValidation.errors[0],
+        variant: "destructive"
+      });
+      return;
+    }
+
+    if (registerData.password.length < 8) {
+      toast({
+        title: "Senha muito fraca",
+        description: "A senha deve ter pelo menos 8 caracteres.",
         variant: "destructive"
       });
       return;
@@ -78,10 +112,15 @@ const Auth = () => {
       return;
     }
 
-    if (registerData.password.length < 6) {
+    // Check for strong password
+    const hasUpperCase = /[A-Z]/.test(registerData.password);
+    const hasLowerCase = /[a-z]/.test(registerData.password);
+    const hasNumbers = /\d/.test(registerData.password);
+    
+    if (!hasUpperCase || !hasLowerCase || !hasNumbers) {
       toast({
         title: "Senha muito fraca",
-        description: "A senha deve ter pelo menos 6 caracteres.",
+        description: "A senha deve conter maiúsculas, minúsculas e números.",
         variant: "destructive"
       });
       return;
@@ -89,14 +128,11 @@ const Auth = () => {
 
     setIsLoading(true);
     
-    try {
-      await signUp(registerData.email, registerData.password, registerData.name);
-      // Navigation will happen automatically via useEffect when user state updates
-    } catch (error) {
-      // Error handling is done in the useAuth hook
-    } finally {
-      setIsLoading(false);
-    }
+    await handleAsyncError(async () => {
+      await signUp(registerData.email.trim(), registerData.password, sanitizedName);
+    }, 'Registration attempt');
+    
+    setIsLoading(false);
   };
 
   const handleSocialLogin = (provider: string) => {
@@ -157,7 +193,7 @@ const Auth = () => {
                         placeholder="seu@email.com"
                         className="pl-10"
                         value={loginData.email}
-                        onChange={(e) => setLoginData(prev => ({ ...prev, email: e.target.value }))}
+                        onChange={(e) => setLoginData(prev => ({ ...prev, email: e.target.value.trim() }))}
                       />
                     </div>
                   </div>
@@ -238,7 +274,7 @@ const Auth = () => {
                         placeholder="seu@email.com"
                         className="pl-10"
                         value={registerData.email}
-                        onChange={(e) => setRegisterData(prev => ({ ...prev, email: e.target.value }))}
+                        onChange={(e) => setRegisterData(prev => ({ ...prev, email: e.target.value.trim() }))}
                       />
                     </div>
                   </div>

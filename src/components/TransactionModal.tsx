@@ -8,6 +8,8 @@ import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/hooks/use-toast';
 import { TransactionInput } from '@/hooks/useTransactions';
 import { Category } from '@/hooks/useCategories';
+import { useInputValidation } from '@/hooks/useInputValidation';
+import { useErrorHandler } from '@/hooks/useErrorHandler';
 
 interface TransactionModalProps {
   open: boolean;
@@ -23,11 +25,17 @@ const TransactionModal = ({ open, onOpenChange, onAddTransaction, categories }: 
   const [amount, setAmount] = useState('');
   const [loading, setLoading] = useState(false);
   const { toast } = useToast();
+  const { validateAmount, sanitizeText } = useInputValidation();
+  const { handleAsyncError } = useErrorHandler();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!categoryId || !description || !amount) {
+    // Validate inputs
+    const sanitizedDescription = sanitizeText(description);
+    const amountValidation = validateAmount(amount);
+    
+    if (!categoryId || !sanitizedDescription || !amount) {
       toast({
         title: "Erro",
         description: "Por favor, preencha todos os campos obrigatórios.",
@@ -36,12 +44,31 @@ const TransactionModal = ({ open, onOpenChange, onAddTransaction, categories }: 
       return;
     }
 
+    if (!amountValidation.isValid) {
+      toast({
+        title: "Valor inválido",
+        description: amountValidation.errors[0],
+        variant: "destructive"
+      });
+      return;
+    }
+
+    if (sanitizedDescription.length < 3) {
+      toast({
+        title: "Descrição muito curta",
+        description: "A descrição deve ter pelo menos 3 caracteres.",
+        variant: "destructive"
+      });
+      return;
+    }
+
     setLoading(true);
-    try {
+    
+    const success = await handleAsyncError(async () => {
       const transaction: TransactionInput = {
         type,
         category_id: categoryId,
-        description,
+        description: sanitizedDescription,
         amount: parseFloat(amount)
       };
 
@@ -53,11 +80,9 @@ const TransactionModal = ({ open, onOpenChange, onAddTransaction, categories }: 
       setAmount('');
       
       onOpenChange(false);
-    } catch (error) {
-      // Error already handled in hook
-    } finally {
-      setLoading(false);
-    }
+    }, 'Transaction creation');
+    
+    setLoading(false);
   };
 
   const filteredCategories = categories.filter(cat => cat.type === type);
@@ -111,7 +136,7 @@ const TransactionModal = ({ open, onOpenChange, onAddTransaction, categories }: 
               id="description"
               placeholder="Descreva a transação..."
               value={description}
-              onChange={(e) => setDescription(e.target.value)}
+              onChange={(e) => setDescription(e.target.value.slice(0, 500))}
             />
           </div>
 
@@ -121,6 +146,8 @@ const TransactionModal = ({ open, onOpenChange, onAddTransaction, categories }: 
               id="amount"
               type="number"
               step="0.01"
+              min="0"
+              max="999999999.99"
               placeholder="0.00"
               value={amount}
               onChange={(e) => setAmount(e.target.value)}
