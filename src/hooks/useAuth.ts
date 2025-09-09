@@ -49,7 +49,12 @@ export const useAuth = () => {
       if (data.user && !data.session) {
         toast({
           title: "Confirme seu email",
-          description: "Enviamos um link de confirmação para seu email.",
+          description: "Enviamos um link de confirmação para seu email. Verifique sua caixa de entrada e spam.",
+        });
+      } else if (data.session) {
+        toast({
+          title: "Conta criada",
+          description: "Bem-vindo ao Finska!",
         });
       }
 
@@ -57,6 +62,32 @@ export const useAuth = () => {
     } catch (error: any) {
       toast({
         title: "Erro no cadastro",
+        description: error.message,
+        variant: "destructive"
+      });
+      throw error;
+    }
+  };
+
+  const resendConfirmation = async (email: string) => {
+    try {
+      const { error } = await supabase.auth.resend({
+        type: 'signup',
+        email,
+        options: {
+          emailRedirectTo: `${window.location.origin}/`
+        }
+      });
+
+      if (error) throw error;
+
+      toast({
+        title: "Email reenviado",
+        description: "Verificamos sua caixa de entrada e spam.",
+      });
+    } catch (error: any) {
+      toast({
+        title: "Erro ao reenviar",
         description: error.message,
         variant: "destructive"
       });
@@ -114,6 +145,7 @@ export const useAuth = () => {
     signUp,
     signIn,
     signOut,
+    resendConfirmation,
     isAuthenticated: !!user
   };
 };

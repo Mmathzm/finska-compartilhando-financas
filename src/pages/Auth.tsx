@@ -18,7 +18,7 @@ const Auth = () => {
   const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate();
   const { toast } = useToast();
-  const { signIn, signUp, user, loading } = useAuth();
+  const { signIn, signUp, resendConfirmation, user, loading } = useAuth();
   const { validateEmail, sanitizeText } = useInputValidation();
   const { handleAsyncError } = useErrorHandler();
   
@@ -234,7 +234,7 @@ const Auth = () => {
                     {isLoading ? "Entrando..." : "Entrar"}
                   </Button>
                   
-                  <div className="text-center">
+                  <div className="text-center space-y-2">
                     <Button 
                       type="button"
                       variant="link" 
@@ -243,6 +243,17 @@ const Auth = () => {
                     >
                       Esqueci minha senha
                     </Button>
+                    <div>
+                      <Button 
+                        type="button"
+                        variant="link" 
+                        className="text-muted-foreground text-sm"
+                        onClick={() => resendConfirmation(loginData.email)}
+                        disabled={!loginData.email || isLoading}
+                      >
+                        Reenviar email de confirmação
+                      </Button>
+                    </div>
                   </div>
                 </form>
               </TabsContent>
