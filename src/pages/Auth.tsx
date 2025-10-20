@@ -6,7 +6,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Separator } from '@/components/ui/separator';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { CreditCard, Mail, Lock, User, Eye, EyeOff } from 'lucide-react';
+import { CreditCard, Mail, Lock, User, Eye, EyeOff, LogOut } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/hooks/useAuth';
 import { useInputValidation } from '@/hooks/useInputValidation';
@@ -18,7 +18,7 @@ const Auth = () => {
   const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate();
   const { toast } = useToast();
-  const { signIn, signUp, resendConfirmation, user, loading } = useAuth();
+  const { signIn, signUp, resendConfirmation, signOut, user, loading } = useAuth();
   const { validateEmail, sanitizeText } = useInputValidation();
   const { handleAsyncError } = useErrorHandler();
   
@@ -158,6 +158,16 @@ const Auth = () => {
     });
   };
 
+  const handleLogout = async () => {
+    try {
+      await signOut();
+      setLoginData({ email: '', password: '' });
+      setRegisterData({ name: '', email: '', password: '', confirmPassword: '' });
+    } catch (error: any) {
+      handleAsyncError(error, "Erro ao sair da conta");
+    }
+  };
+
   return (
     <div className="min-h-screen bg-gradient-hero flex items-center justify-center p-4">
       <div className="w-full max-w-md">
@@ -172,7 +182,22 @@ const Auth = () => {
 
         <Card className="shadow-primary border-0 bg-background/95 backdrop-blur">
           <CardHeader className="text-center">
-            <CardTitle className="text-2xl">Bem-vindo ao Finska</CardTitle>
+            <div className="flex items-center justify-between">
+              <div className="flex-1"></div>
+              <CardTitle className="text-2xl flex-1">Bem-vindo ao Finska</CardTitle>
+              {user && (
+                <div className="flex-1 flex justify-end">
+                  <Button 
+                    variant="ghost" 
+                    size="sm" 
+                    onClick={handleLogout}
+                    className="text-muted-foreground hover:text-foreground"
+                  >
+                    <LogOut className="h-4 w-4" />
+                  </Button>
+                </div>
+              )}
+            </div>
           </CardHeader>
           <CardContent>
             <Tabs defaultValue="login" className="w-full">
