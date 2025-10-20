@@ -182,22 +182,7 @@ const Auth = () => {
 
         <Card className="shadow-primary border-0 bg-background/95 backdrop-blur">
           <CardHeader className="text-center">
-            <div className="flex items-center justify-between">
-              <div className="flex-1"></div>
-              <CardTitle className="text-2xl flex-1">Bem-vindo ao Finska</CardTitle>
-              {user && (
-                <div className="flex-1 flex justify-end">
-                  <Button 
-                    variant="ghost" 
-                    size="sm" 
-                    onClick={handleLogout}
-                    className="text-muted-foreground hover:text-foreground"
-                  >
-                    <LogOut className="h-4 w-4" />
-                  </Button>
-                </div>
-              )}
-            </div>
+            <CardTitle className="text-2xl">Bem-vindo ao Finska</CardTitle>
           </CardHeader>
           <CardContent>
             <Tabs defaultValue="login" className="w-full">

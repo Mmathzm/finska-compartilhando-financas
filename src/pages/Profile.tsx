@@ -21,9 +21,11 @@ import {
   Target,
   Camera,
   Save,
-  Trash2
+  Trash2,
+  LogOut
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import { useAuth } from '@/hooks/useAuth';
 import PaymentMethodsModal from '@/components/PaymentMethodsModal';
 import PrivacySecurityModal from '@/components/PrivacySecurityModal';
 import AdvancedSettingsModal from '@/components/AdvancedSettingsModal';
@@ -34,6 +36,7 @@ const Profile = () => {
   const [showPrivacyModal, setShowPrivacyModal] = useState(false);
   const [showAdvancedModal, setShowAdvancedModal] = useState(false);
   const { toast } = useToast();
+  const { signOut } = useAuth();
 
   const [profileData, setProfileData] = useState({
     name: 'Maria Silva',
@@ -90,6 +93,18 @@ const Profile = () => {
 
   const handleAdvancedSettings = () => {
     setShowAdvancedModal(true);
+  };
+
+  const handleLogout = async () => {
+    try {
+      await signOut();
+    } catch (error) {
+      toast({
+        title: "Erro ao sair",
+        description: "Não foi possível fazer logout. Tente novamente.",
+        variant: "destructive",
+      });
+    }
   };
 
   const handleDeleteAccount = () => {
@@ -393,6 +408,14 @@ const Profile = () => {
                   Configurações Avançadas
                 </Button>
                 <Separator />
+                <Button 
+                  variant="outline" 
+                  className="w-full justify-start"
+                  onClick={handleLogout}
+                >
+                  <LogOut className="h-4 w-4 mr-2" />
+                  Sair da Conta
+                </Button>
                 <Button 
                   variant="destructive" 
                   className="w-full justify-start"
