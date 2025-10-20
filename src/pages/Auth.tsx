@@ -173,11 +173,26 @@ const Auth = () => {
       <div className="w-full max-w-md">
         {/* Logo */}
         <div className="text-center mb-8">
-          <div className="flex items-center justify-center gap-2 mb-4">
-            <CreditCard className="h-12 w-12 text-white" />
-            <span className="text-3xl font-bold text-white">Finska</span>
-          </div>
+          <a 
+            href="https://finska.com" 
+            target="_blank" 
+            rel="noopener noreferrer"
+            className="inline-block"
+          >
+            <div className="flex items-center justify-center gap-2 mb-4 hover:opacity-80 transition-opacity">
+              <CreditCard className="h-12 w-12 text-white" />
+              <span className="text-3xl font-bold text-white">Finska</span>
+            </div>
+          </a>
           <p className="text-white/80">Sua jornada financeira começa aqui</p>
+          <a 
+            href="https://finska.com" 
+            target="_blank" 
+            rel="noopener noreferrer"
+            className="text-white/60 text-sm hover:text-white/90 transition-colors underline"
+          >
+            Finska.com
+          </a>
         </div>
 
         <Card className="shadow-primary border-0 bg-background/95 backdrop-blur">
