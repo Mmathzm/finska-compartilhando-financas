@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -20,23 +20,8 @@ import {
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { useSharedAccounts } from '@/hooks/useSharedAccounts';
+import { useSharedAccountInvitations } from '@/hooks/useSharedAccountInvitations';
 import { useAuth } from '@/hooks/useAuth';
-
-interface MockMember {
-  id: string;
-  name: string;
-  email: string;
-  avatar: string;
-  isOwner: boolean;
-}
-
-interface MockAccount {
-  id: string;
-  name: string;
-  balance: number;
-  members: MockMember[];
-  pendingInvites: string[];
-}
 
 const SharedAccounts = () => {
   const [newInviteEmail, setNewInviteEmail] = useState('');
@@ -50,71 +35,63 @@ const SharedAccounts = () => {
   const { toast } = useToast();
   const { user } = useAuth();
   const { sharedAccounts, loading, createSharedAccount, addMoneyToAccount } = useSharedAccounts();
+  const { 
+    invitations, 
+    loading: invitationsLoading,
+    sendInvitation, 
+    acceptInvitation, 
+    rejectInvitation,
+    cancelInvitation,
+    getAccountInvitations 
+  } = useSharedAccountInvitations();
 
-  // Mock data for demo - replace with real data when ready
-  const [mockAccounts, setMockAccounts] = useState<MockAccount[]>([
-    {
-      id: '1',
-      name: 'Conta da Casa',
-      balance: 2500.00,
-      members: [
-        { id: '1', name: 'Você', email: 'voce@email.com', avatar: '', isOwner: true },
-        { id: '2', name: 'Maria Silva', email: 'maria@email.com', avatar: '', isOwner: false },
-      ],
-      pendingInvites: ['carlos@email.com']
-    }
-  ]);
+  const [accountInvitations, setAccountInvitations] = useState<Record<string, any[]>>({});
 
-  const [pendingInvites, setPendingInvites] = useState([
-    {
-      id: '1',
-      accountName: 'Conta do Trabalho',
-      inviterName: 'Pedro Oliveira',
-      inviterEmail: 'pedro@empresa.com',
-      inviteDate: '2024-01-15'
-    }
-  ]);
-
-  const handleSendInvite = () => {
-    if (newInviteEmail && selectedAccount) {
-      setMockAccounts(prev => prev.map(account => 
-        account.id === selectedAccount 
-          ? { ...account, pendingInvites: [...account.pendingInvites, newInviteEmail] }
-          : account
-      ));
-      
-      toast({
-        title: "Convite enviado!",
-        description: `Convite para ${newInviteEmail} foi enviado com sucesso.`,
-      });
-      setNewInviteEmail('');
-      setSelectedAccount(null);
-    } else {
+  const handleSendInvite = async () => {
+    if (!newInviteEmail || !selectedAccount) {
       toast({
         title: "Erro",
-        description: "Selecione uma conta e digite um email válido.",
+        description: "Digite um email válido.",
         variant: "destructive"
       });
+      return;
+    }
+
+    setIsLoading(true);
+    try {
+      await sendInvitation(selectedAccount, newInviteEmail);
+      setNewInviteEmail('');
+      setSelectedAccount(null);
+    } catch (error) {
+      // Error already handled in hook
+    } finally {
+      setIsLoading(false);
     }
   };
 
-  const handleAcceptInvite = (inviteId: string) => {
-    setPendingInvites(prev => prev.filter(invite => invite.id !== inviteId));
-    toast({
-      title: "Convite aceito!",
-      description: "Você agora faz parte da conta compartilhada.",
-    });
+  const handleAcceptInvite = async (inviteId: string) => {
+    setIsLoading(true);
+    try {
+      await acceptInvitation(inviteId);
+    } catch (error) {
+      // Error already handled in hook
+    } finally {
+      setIsLoading(false);
+    }
   };
 
-  const handleRejectInvite = (inviteId: string) => {
-    setPendingInvites(prev => prev.filter(invite => invite.id !== inviteId));
-    toast({
-      title: "Convite recusado",
-      description: "O convite foi recusado.",
-    });
+  const handleRejectInvite = async (inviteId: string) => {
+    setIsLoading(true);
+    try {
+      await rejectInvitation(inviteId);
+    } catch (error) {
+      // Error already handled in hook
+    } finally {
+      setIsLoading(false);
+    }
   };
 
-  const handleCreateAccount = () => {
+  const handleCreateAccount = async () => {
     if (!newAccountName.trim()) {
       toast({
         title: "Nome obrigatório",
@@ -124,71 +101,77 @@ const SharedAccounts = () => {
       return;
     }
 
-    const newAccount: MockAccount = {
-      id: Date.now().toString(),
-      name: newAccountName,
-      balance: 0,
-      members: [
-        { id: '1', name: 'Você', email: 'voce@email.com', avatar: '', isOwner: true }
-      ],
-      pendingInvites: []
-    };
-
-    setMockAccounts(prev => [...prev, newAccount]);
-    setNewAccountName('');
-    setShowNewAccountDialog(false);
-    
-    toast({
-      title: "Conta criada!",
-      description: "Nova conta compartilhada criada com sucesso.",
-    });
+    setIsLoading(true);
+    try {
+      await createSharedAccount({ name: newAccountName });
+      setNewAccountName('');
+      setShowNewAccountDialog(false);
+    } catch (error) {
+      // Error already handled in hook
+    } finally {
+      setIsLoading(false);
+    }
   };
 
-  const handleRemovePendingInvite = (accountId: string, email: string) => {
-    setMockAccounts(prev => prev.map(account => 
-      account.id === accountId 
-        ? { ...account, pendingInvites: account.pendingInvites.filter(invite => invite !== email) }
-        : account
-    ));
-    
-    toast({
-      title: "Convite cancelado",
-      description: "O convite foi cancelado com sucesso.",
-    });
+  const handleRemovePendingInvite = async (invitationId: string) => {
+    setIsLoading(true);
+    try {
+      await cancelInvitation(invitationId);
+      // Refresh account invitations
+      sharedAccounts.forEach(async (account) => {
+        const invites = await getAccountInvitations(account.id);
+        setAccountInvitations(prev => ({ ...prev, [account.id]: invites }));
+      });
+    } catch (error) {
+      // Error already handled in hook
+    } finally {
+      setIsLoading(false);
+    }
   };
 
-  const handleAddMoney = () => {
+  const handleAddMoney = async () => {
     const amount = parseFloat(addMoneyAmount);
     
     if (!addMoneyAccountId || !addMoneyAmount || amount <= 0) {
       toast({
         title: "Erro",
-        description: "Selecione uma conta e digite um valor válido.",
+        description: "Digite um valor válido.",
         variant: "destructive"
       });
       return;
     }
 
-    setMockAccounts(prev => prev.map(account => 
-      account.id === addMoneyAccountId 
-        ? { ...account, balance: account.balance + amount }
-        : account
-    ));
-    
-    toast({
-      title: "Dinheiro adicionado!",
-      description: `R$ ${amount.toLocaleString('pt-BR', { minimumFractionDigits: 2 })} foi adicionado à conta.`,
-    });
-    
-    setAddMoneyAmount('');
-    setAddMoneyAccountId(null);
-    setShowAddMoneyDialog(false);
+    setIsLoading(true);
+    try {
+      await addMoneyToAccount(addMoneyAccountId, amount);
+      setAddMoneyAmount('');
+      setAddMoneyAccountId(null);
+      setShowAddMoneyDialog(false);
+    } catch (error) {
+      // Error already handled in hook
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const openAddMoneyDialog = (accountId: string) => {
     setAddMoneyAccountId(accountId);
     setShowAddMoneyDialog(true);
   };
+
+  // Load account invitations when accounts change
+  useEffect(() => {
+    const loadAccountInvitations = async () => {
+      for (const account of sharedAccounts) {
+        const invites = await getAccountInvitations(account.id);
+        setAccountInvitations(prev => ({ ...prev, [account.id]: invites }));
+      }
+    };
+    
+    if (sharedAccounts.length > 0) {
+      loadAccountInvitations();
+    }
+  }, [sharedAccounts]);
 
   return (
     <div className="min-h-screen bg-background">
@@ -231,7 +214,9 @@ const SharedAccounts = () => {
                   <Button 
                     className="flex-1 bg-gradient-primary"
                     onClick={handleCreateAccount}
+                    disabled={isLoading}
                   >
+                    {isLoading ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : null}
                     Criar Conta
                   </Button>
                 </div>
@@ -270,8 +255,9 @@ const SharedAccounts = () => {
                 <Button 
                   className="flex-1 bg-gradient-primary"
                   onClick={handleAddMoney}
+                  disabled={isLoading}
                 >
-                  <DollarSign className="h-4 w-4 mr-2" />
+                  {isLoading ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <DollarSign className="h-4 w-4 mr-2" />}
                   Adicionar
                 </Button>
               </div>
@@ -280,7 +266,7 @@ const SharedAccounts = () => {
         </Dialog>
 
         {/* Convites Pendentes */}
-        {pendingInvites.length > 0 && (
+        {invitations.length > 0 && (
           <Card className="shadow-card border-accent/20">
             <CardHeader>
               <CardTitle className="flex items-center gap-2 text-accent">
@@ -290,27 +276,29 @@ const SharedAccounts = () => {
             </CardHeader>
             <CardContent>
               <div className="space-y-4">
-                {pendingInvites.map((invite) => (
+                {invitations.map((invite) => (
                   <div key={invite.id} className="flex items-center justify-between p-4 rounded-lg bg-accent/10 border border-accent/20">
                     <div>
-                      <h3 className="font-semibold">{invite.accountName}</h3>
+                      <h3 className="font-semibold">{invite.shared_account?.name || 'Conta Compartilhada'}</h3>
                       <p className="text-sm text-muted-foreground">
-                        Convidado por {invite.inviterName} ({invite.inviterEmail})
+                        Convite recebido
                       </p>
                     </div>
                     <div className="flex gap-2">
                       <Button 
                         size="sm" 
                         onClick={() => handleAcceptInvite(invite.id)}
+                        disabled={isLoading}
                         className="bg-success hover:bg-success/90"
                       >
-                        <Check className="h-4 w-4 mr-2" />
+                        {isLoading ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Check className="h-4 w-4 mr-2" />}
                         Aceitar
                       </Button>
                       <Button 
                         size="sm" 
                         variant="destructive"
                         onClick={() => handleRejectInvite(invite.id)}
+                        disabled={isLoading}
                       >
                         <X className="h-4 w-4 mr-2" />
                         Recusar
@@ -325,7 +313,7 @@ const SharedAccounts = () => {
 
         {/* Minhas Contas */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          {mockAccounts.map((account) => (
+          {sharedAccounts.map((account) => (
             <Card key={account.id} className="shadow-card">
               <CardHeader>
                 <div className="flex items-center justify-between">
@@ -334,7 +322,7 @@ const SharedAccounts = () => {
                     {account.name}
                   </CardTitle>
                   <Badge variant="secondary">
-                    {account.members.length} membros
+                    {account.members?.length || 0} membros
                   </Badge>
                 </div>
               </CardHeader>
@@ -357,51 +345,55 @@ const SharedAccounts = () => {
                          Adicionar
                        </Button>
                      </div>
-                     <p className="text-2xl font-bold">
-                       R$ {account.balance.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
-                     </p>
+                      <p className="text-2xl font-bold">
+                        R$ {Number(account.balance).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                      </p>
                    </div>
 
                   {/* Membros */}
-                  <div>
-                    <h4 className="font-semibold mb-3">Membros</h4>
-                    <div className="space-y-2">
-                      {account.members.map((member) => (
-                        <div key={member.id} className="flex items-center justify-between">
-                          <div className="flex items-center gap-3">
-                            <Avatar className="h-8 w-8">
-                              <AvatarImage src={member.avatar} alt={member.name} />
-                              <AvatarFallback>{member.name.split(' ').map(n => n[0]).join('')}</AvatarFallback>
-                            </Avatar>
-                            <div>
-                              <p className="font-medium">{member.name}</p>
-                              <p className="text-xs text-muted-foreground">{member.email}</p>
+                  {account.members && account.members.length > 0 && (
+                    <div>
+                      <h4 className="font-semibold mb-3">Membros</h4>
+                      <div className="space-y-2">
+                        {account.members.map((member) => (
+                          <div key={member.id} className="flex items-center justify-between">
+                            <div className="flex items-center gap-3">
+                              <Avatar className="h-8 w-8">
+                                <AvatarFallback>
+                                  {member.user_id === user?.id ? 'VO' : 'M'}
+                                </AvatarFallback>
+                              </Avatar>
+                              <div>
+                                <p className="font-medium">
+                                  {member.user_id === user?.id ? 'Você' : 'Membro'}
+                                </p>
+                                <p className="text-xs text-muted-foreground">{member.role}</p>
+                              </div>
                             </div>
+                            <Badge variant="outline" className="text-xs">{member.role}</Badge>
                           </div>
-                          {member.isOwner && (
-                            <Badge variant="outline" className="text-xs">Dono</Badge>
-                          )}
-                        </div>
-                      ))}
+                        ))}
+                      </div>
                     </div>
-                  </div>
+                  )}
 
                   {/* Convites Pendentes */}
-                  {account.pendingInvites.length > 0 && (
+                  {accountInvitations[account.id]?.length > 0 && (
                     <div>
                       <h4 className="font-semibold mb-3">Convites Pendentes</h4>
                       <div className="space-y-2">
-                        {account.pendingInvites.map((email, index) => (
-                          <div key={index} className="flex items-center justify-between p-2 rounded bg-muted">
-                            <span className="text-sm">{email}</span>
+                        {accountInvitations[account.id].map((invitation: any) => (
+                          <div key={invitation.id} className="flex items-center justify-between p-2 rounded bg-muted">
+                            <span className="text-sm">{invitation.invited_email}</span>
                             <div className="flex items-center gap-2">
                               <Badge variant="outline" className="text-xs">Pendente</Badge>
                               <Button 
                                 size="sm" 
                                 variant="ghost"
-                                onClick={() => handleRemovePendingInvite(account.id, email)}
+                                onClick={() => handleRemovePendingInvite(invitation.id)}
+                                disabled={isLoading}
                               >
-                                <X className="h-3 w-3" />
+                                <Trash2 className="h-3 w-3" />
                               </Button>
                             </div>
                           </div>
@@ -430,9 +422,9 @@ const SharedAccounts = () => {
                       <Button 
                         size="sm"
                         onClick={handleSendInvite}
-                        disabled={!newInviteEmail || selectedAccount !== account.id}
+                        disabled={!newInviteEmail || selectedAccount !== account.id || isLoading}
                       >
-                        <Send className="h-4 w-4" />
+                        {isLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
                       </Button>
                     </div>
                   </div>
