@@ -162,6 +162,44 @@ export type Database = {
           },
         ]
       }
+      shared_account_invitations: {
+        Row: {
+          created_at: string
+          expires_at: string
+          id: string
+          invited_by: string
+          invited_email: string
+          shared_account_id: string
+          status: string
+        }
+        Insert: {
+          created_at?: string
+          expires_at?: string
+          id?: string
+          invited_by: string
+          invited_email: string
+          shared_account_id: string
+          status?: string
+        }
+        Update: {
+          created_at?: string
+          expires_at?: string
+          id?: string
+          invited_by?: string
+          invited_email?: string
+          shared_account_id?: string
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "shared_account_invitations_shared_account_id_fkey"
+            columns: ["shared_account_id"]
+            isOneToOne: false
+            referencedRelation: "shared_accounts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       shared_account_members: {
         Row: {
           id: string
