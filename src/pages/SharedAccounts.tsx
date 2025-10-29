@@ -6,6 +6,7 @@ import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { 
   Users, 
   Plus, 
@@ -22,6 +23,8 @@ import { useToast } from '@/hooks/use-toast';
 import { useSharedAccounts } from '@/hooks/useSharedAccounts';
 import { useSharedAccountInvitations } from '@/hooks/useSharedAccountInvitations';
 import { useAuth } from '@/hooks/useAuth';
+import { SharedAccountTransactions } from '@/components/SharedAccountTransactions';
+import { SharedAccountContributions } from '@/components/SharedAccountContributions';
 
 const SharedAccounts = () => {
   const [newInviteEmail, setNewInviteEmail] = useState('');
@@ -314,7 +317,7 @@ const SharedAccounts = () => {
         )}
 
         {/* Minhas Contas */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <div className="grid grid-cols-1 gap-6">
           {sharedAccounts.map((account) => (
             <Card key={account.id} className="shadow-card">
               <CardHeader>
@@ -329,108 +332,124 @@ const SharedAccounts = () => {
                 </div>
               </CardHeader>
               <CardContent>
-                <div className="space-y-4">
-                   {/* Saldo */}
-                   <div className="p-4 rounded-lg bg-gradient-primary text-primary-foreground">
-                     <div className="flex items-center justify-between">
-                       <div className="flex items-center gap-2">
-                         <DollarSign className="h-5 w-5" />
-                         <span className="text-sm opacity-90">Saldo Atual</span>
-                       </div>
-                       <Button 
-                         size="sm" 
-                         variant="secondary"
-                         onClick={() => openAddMoneyDialog(account.id)}
-                         className="bg-white/20 hover:bg-white/30 text-white border-0"
-                       >
-                         <Plus className="h-4 w-4 mr-1" />
-                         Adicionar
-                       </Button>
-                     </div>
-                      <p className="text-2xl font-bold">
+                <Tabs defaultValue="overview" className="w-full">
+                  <TabsList className="grid w-full grid-cols-3">
+                    <TabsTrigger value="overview">Visão Geral</TabsTrigger>
+                    <TabsTrigger value="transactions">Transações</TabsTrigger>
+                    <TabsTrigger value="contributions">Contribuições</TabsTrigger>
+                  </TabsList>
+                  
+                  <TabsContent value="overview" className="space-y-4">
+                    {/* Saldo */}
+                    <div className="p-4 rounded-lg bg-gradient-primary text-primary-foreground">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-2">
+                          <DollarSign className="h-5 w-5" />
+                          <span className="text-sm opacity-90">Saldo Atual</span>
+                        </div>
+                        <Button 
+                          size="sm" 
+                          variant="secondary"
+                          onClick={() => openAddMoneyDialog(account.id)}
+                          className="bg-white/20 hover:bg-white/30 text-white border-0"
+                        >
+                          <Plus className="h-4 w-4 mr-1" />
+                          Adicionar
+                        </Button>
+                      </div>
+                      <p className="text-2xl font-bold mt-2">
                         R$ {Number(account.balance).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
                       </p>
-                   </div>
+                    </div>
 
-                  {/* Membros */}
-                  {account.members && account.members.length > 0 && (
-                    <div>
-                      <h4 className="font-semibold mb-3">Membros</h4>
-                      <div className="space-y-2">
-                        {account.members.map((member) => (
-                          <div key={member.id} className="flex items-center justify-between">
-                            <div className="flex items-center gap-3">
-                              <Avatar className="h-8 w-8">
-                                <AvatarFallback>
-                                  {member.user_id === user?.id ? 'VO' : 'M'}
-                                </AvatarFallback>
-                              </Avatar>
-                              <div>
-                                <p className="font-medium">
-                                  {member.user_id === user?.id ? 'Você' : 'Membro'}
-                                </p>
-                                <p className="text-xs text-muted-foreground">{member.role}</p>
+                    {/* Membros */}
+                    {account.members && account.members.length > 0 && (
+                      <div>
+                        <h4 className="font-semibold mb-3">Membros</h4>
+                        <div className="space-y-2">
+                          {account.members.map((member) => (
+                            <div key={member.id} className="flex items-center justify-between">
+                              <div className="flex items-center gap-3">
+                                <Avatar className="h-8 w-8">
+                                  <AvatarFallback>
+                                    {member.user_id === user?.id ? 'VO' : 'M'}
+                                  </AvatarFallback>
+                                </Avatar>
+                                <div>
+                                  <p className="font-medium">
+                                    {member.user_id === user?.id ? 'Você' : 'Membro'}
+                                  </p>
+                                  <p className="text-xs text-muted-foreground">{member.role}</p>
+                                </div>
+                              </div>
+                              <Badge variant="outline" className="text-xs">{member.role}</Badge>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Convites Pendentes */}
+                    {accountInvitations[account.id]?.length > 0 && (
+                      <div>
+                        <h4 className="font-semibold mb-3">Convites Pendentes</h4>
+                        <div className="space-y-2">
+                          {accountInvitations[account.id].map((invitation: any) => (
+                            <div key={invitation.id} className="flex items-center justify-between p-2 rounded bg-muted">
+                              <span className="text-sm">{invitation.invited_email}</span>
+                              <div className="flex items-center gap-2">
+                                <Badge variant="outline" className="text-xs">Pendente</Badge>
+                                <Button 
+                                  size="sm" 
+                                  variant="ghost"
+                                  onClick={() => handleRemovePendingInvite(invitation.id)}
+                                  disabled={isLoading}
+                                >
+                                  <Trash2 className="h-3 w-3" />
+                                </Button>
                               </div>
                             </div>
-                            <Badge variant="outline" className="text-xs">{member.role}</Badge>
-                          </div>
-                        ))}
+                          ))}
+                        </div>
                       </div>
-                    </div>
-                  )}
+                    )}
 
-                  {/* Convites Pendentes */}
-                  {accountInvitations[account.id]?.length > 0 && (
-                    <div>
-                      <h4 className="font-semibold mb-3">Convites Pendentes</h4>
-                      <div className="space-y-2">
-                        {accountInvitations[account.id].map((invitation: any) => (
-                          <div key={invitation.id} className="flex items-center justify-between p-2 rounded bg-muted">
-                            <span className="text-sm">{invitation.invited_email}</span>
-                            <div className="flex items-center gap-2">
-                              <Badge variant="outline" className="text-xs">Pendente</Badge>
-                              <Button 
-                                size="sm" 
-                                variant="ghost"
-                                onClick={() => handleRemovePendingInvite(invitation.id)}
-                                disabled={isLoading}
-                              >
-                                <Trash2 className="h-3 w-3" />
-                              </Button>
-                            </div>
-                          </div>
-                        ))}
+                    {/* Convidar Novo Membro */}
+                    <div className="border-t pt-4">
+                      <div className="flex gap-2">
+                        <div className="flex-1">
+                          <Label htmlFor={`invite-${account.id}`} className="sr-only">
+                            Email para convidar
+                          </Label>
+                          <Input
+                            id={`invite-${account.id}`}
+                            placeholder="Email para convidar"
+                            value={selectedAccount === account.id ? newInviteEmail : ''}
+                            onChange={(e) => {
+                              setNewInviteEmail(e.target.value);
+                              setSelectedAccount(account.id);
+                            }}
+                          />
+                        </div>
+                        <Button 
+                          size="sm"
+                          onClick={handleSendInvite}
+                          disabled={!newInviteEmail || selectedAccount !== account.id || isLoading}
+                        >
+                          {isLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
+                        </Button>
                       </div>
                     </div>
-                  )}
+                  </TabsContent>
 
-                  {/* Convidar Novo Membro */}
-                  <div className="border-t pt-4">
-                    <div className="flex gap-2">
-                      <div className="flex-1">
-                        <Label htmlFor={`invite-${account.id}`} className="sr-only">
-                          Email para convidar
-                        </Label>
-                        <Input
-                          id={`invite-${account.id}`}
-                          placeholder="Email para convidar"
-                          value={selectedAccount === account.id ? newInviteEmail : ''}
-                          onChange={(e) => {
-                            setNewInviteEmail(e.target.value);
-                            setSelectedAccount(account.id);
-                          }}
-                        />
-                      </div>
-                      <Button 
-                        size="sm"
-                        onClick={handleSendInvite}
-                        disabled={!newInviteEmail || selectedAccount !== account.id || isLoading}
-                      >
-                        {isLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
-                      </Button>
-                    </div>
-                  </div>
-                </div>
+                  <TabsContent value="transactions">
+                    <SharedAccountTransactions accountId={account.id} />
+                  </TabsContent>
+
+                  <TabsContent value="contributions">
+                    <SharedAccountContributions accountId={account.id} />
+                  </TabsContent>
+                </Tabs>
               </CardContent>
             </Card>
           ))}

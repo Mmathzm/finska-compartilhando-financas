@@ -162,6 +162,41 @@ export type Database = {
           },
         ]
       }
+      shared_account_contributions: {
+        Row: {
+          amount: number
+          created_at: string
+          description: string | null
+          id: string
+          shared_account_id: string
+          user_id: string
+        }
+        Insert: {
+          amount: number
+          created_at?: string
+          description?: string | null
+          id?: string
+          shared_account_id: string
+          user_id: string
+        }
+        Update: {
+          amount?: number
+          created_at?: string
+          description?: string | null
+          id?: string
+          shared_account_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "shared_account_contributions_shared_account_id_fkey"
+            columns: ["shared_account_id"]
+            isOneToOne: false
+            referencedRelation: "shared_accounts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       shared_account_invitations: {
         Row: {
           created_at: string
@@ -321,6 +356,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      add_contribution_to_shared_account: {
+        Args: { p_account_id: string; p_amount: number; p_description?: string }
+        Returns: undefined
+      }
       create_default_categories: {
         Args: { user_uuid: string }
         Returns: undefined

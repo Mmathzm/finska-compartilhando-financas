@@ -105,51 +105,28 @@ export const useSharedAccounts = () => {
     }
   };
 
-  // Add money to shared account
-  const addMoneyToAccount = async (accountId: string, amount: number) => {
+  // Add money to shared account with contribution tracking
+  const addMoneyToAccount = async (accountId: string, amount: number, description?: string) => {
     if (!user) {
       throw new Error('User not authenticated');
     }
 
     try {
-      // First get the current balance
-      const { data: currentAccount, error: fetchError } = await supabase
-        .from('shared_accounts')
-        .select('balance')
-        .eq('id', accountId)
-        .single();
-
-      if (fetchError) throw fetchError;
-
-      const newBalance = currentAccount.balance + amount;
-
-      const { data, error } = await supabase
-        .from('shared_accounts')
-        .update({ 
-          balance: newBalance,
-          updated_at: new Date().toISOString()
-        })
-        .eq('id', accountId)
-        .select()
-        .single();
+      const { error } = await supabase.rpc('add_contribution_to_shared_account', {
+        p_account_id: accountId,
+        p_amount: amount,
+        p_description: description || null
+      });
 
       if (error) throw error;
 
-      // Update local state
-      setSharedAccounts(prev => 
-        prev.map(account => 
-          account.id === accountId 
-            ? { ...account, balance: data.balance, updated_at: data.updated_at }
-            : account
-        )
-      );
+      // Refresh shared accounts to get updated balance
+      await fetchSharedAccounts();
 
       toast({
         title: "Sucesso",
         description: `R$ ${amount.toFixed(2)} adicionado à conta.`,
       });
-
-      return data;
     } catch (error) {
       console.error('Error adding money to shared account:', error);
       toast({
