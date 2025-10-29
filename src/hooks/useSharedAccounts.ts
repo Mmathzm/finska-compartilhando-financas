@@ -177,6 +177,38 @@ export const useSharedAccounts = () => {
     }
   };
 
+  // Delete shared account
+  const deleteSharedAccount = async (accountId: string) => {
+    if (!user) {
+      throw new Error('User not authenticated');
+    }
+
+    try {
+      const { error } = await supabase
+        .from('shared_accounts')
+        .delete()
+        .eq('id', accountId);
+
+      if (error) throw error;
+
+      // Remove from local state
+      setSharedAccounts(prev => prev.filter(account => account.id !== accountId));
+
+      toast({
+        title: "Sucesso",
+        description: "Conta compartilhada excluída com sucesso.",
+      });
+    } catch (error) {
+      console.error('Error deleting shared account:', error);
+      toast({
+        title: "Erro",
+        description: "Não foi possível excluir a conta compartilhada.",
+        variant: "destructive"
+      });
+      throw error;
+    }
+  };
+
   useEffect(() => {
     fetchSharedAccounts();
   }, [user]); // Re-fetch when user changes
@@ -187,6 +219,7 @@ export const useSharedAccounts = () => {
     createSharedAccount,
     addMoneyToAccount,
     addMemberToAccount,
+    deleteSharedAccount,
     refreshSharedAccounts: fetchSharedAccounts
   };
 };

@@ -6,6 +6,7 @@ import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { 
   Users, 
@@ -37,7 +38,7 @@ const SharedAccounts = () => {
   const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
   const { user } = useAuth();
-  const { sharedAccounts, loading, createSharedAccount, addMoneyToAccount, refreshSharedAccounts } = useSharedAccounts();
+  const { sharedAccounts, loading, createSharedAccount, addMoneyToAccount, deleteSharedAccount, refreshSharedAccounts } = useSharedAccounts();
   const { 
     invitations, 
     loading: invitationsLoading,
@@ -326,9 +327,37 @@ const SharedAccounts = () => {
                     <Users className="h-5 w-5 text-primary" />
                     {account.name}
                   </CardTitle>
-                  <Badge variant="secondary">
-                    {account.members?.length || 0} membros
-                  </Badge>
+                  <div className="flex items-center gap-2">
+                    <Badge variant="secondary">
+                      {account.members?.length || 0} membros
+                    </Badge>
+                    {account.created_by === user?.id && (
+                      <AlertDialog>
+                        <AlertDialogTrigger asChild>
+                          <Button variant="ghost" size="icon">
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        </AlertDialogTrigger>
+                        <AlertDialogContent>
+                          <AlertDialogHeader>
+                            <AlertDialogTitle>Excluir conta compartilhada?</AlertDialogTitle>
+                            <AlertDialogDescription>
+                              Esta ação não pode ser desfeita. Todos os dados da conta, incluindo transações e contribuições, serão permanentemente excluídos.
+                            </AlertDialogDescription>
+                          </AlertDialogHeader>
+                          <AlertDialogFooter>
+                            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                            <AlertDialogAction
+                              onClick={() => deleteSharedAccount(account.id)}
+                              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                            >
+                              Excluir
+                            </AlertDialogAction>
+                          </AlertDialogFooter>
+                        </AlertDialogContent>
+                      </AlertDialog>
+                    )}
+                  </div>
                 </div>
               </CardHeader>
               <CardContent>
