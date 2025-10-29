@@ -34,7 +34,7 @@ const SharedAccounts = () => {
   const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
   const { user } = useAuth();
-  const { sharedAccounts, loading, createSharedAccount, addMoneyToAccount } = useSharedAccounts();
+  const { sharedAccounts, loading, createSharedAccount, addMoneyToAccount, refreshSharedAccounts } = useSharedAccounts();
   const { 
     invitations, 
     loading: invitationsLoading,
@@ -73,6 +73,8 @@ const SharedAccounts = () => {
     setIsLoading(true);
     try {
       await acceptInvitation(inviteId);
+      // Refresh shared accounts list to show the newly joined account
+      await refreshSharedAccounts();
     } catch (error) {
       // Error already handled in hook
     } finally {
