@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -18,155 +18,134 @@ import {
   CheckCircle,
   X,
   Edit,
-  Trash2
+  Trash2,
+  Loader2
 } from 'lucide-react';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { cn } from '@/lib/utils';
-import { useToast } from '@/hooks/use-toast';
+import { useReminders } from '@/hooks/useReminders';
+import { useCategories } from '@/hooks/useCategories';
 
 const Reminders = () => {
   const [selectedDate, setSelectedDate] = useState<Date>();
   const [showNewReminder, setShowNewReminder] = useState(false);
-  const [reminders, setReminders] = useState([
-    {
-      id: '1',
-      title: 'Conta de Luz',
-      description: 'Pagamento da conta de energia elétrica',
-      amount: 250.00,
-      dueDate: '2024-01-25',
-      category: 'utilities',
-      status: 'pending',
-      priority: 'high'
-    },
-    {
-      id: '2',
-      title: 'Cartão de Crédito',
-      description: 'Fatura do cartão Nubank',
-      amount: 1200.00,
-      dueDate: '2024-01-30',
-      category: 'credit-card',
-      status: 'pending',
-      priority: 'high'
-    },
-    {
-      id: '3',
-      title: 'Internet',
-      description: 'Mensalidade da internet',
-      amount: 99.90,
-      dueDate: '2024-02-05',
-      category: 'utilities',
-      status: 'paid',
-      priority: 'medium'
-    },
-    {
-      id: '4',
-      title: 'Seguro do Carro',
-      description: 'Parcela do seguro do veículo',
-      amount: 180.00,
-      dueDate: '2024-02-15',
-      category: 'insurance',
-      status: 'pending',
-      priority: 'medium'
-    }
-  ]);
+  const [editingId, setEditingId] = useState<string | null>(null);
   const [newReminder, setNewReminder] = useState({
     title: '',
     description: '',
     amount: '',
-    category: '',
-    priority: ''
+    category_id: '',
   });
-  const { toast } = useToast();
   
-  const getCategoryColor = (category: string) => {
-    const colors = {
-      'utilities': 'bg-blue-100 text-blue-800',
-      'credit-card': 'bg-purple-100 text-purple-800',
-      'insurance': 'bg-green-100 text-green-800',
-      'subscription': 'bg-orange-100 text-orange-800',
-      'loan': 'bg-red-100 text-red-800'
-    };
-    return colors[category as keyof typeof colors] || 'bg-gray-100 text-gray-800';
+  const { reminders, loading, createReminder, updateReminder, deleteReminder, markAsPaid } = useReminders();
+  const { categories } = useCategories();
+  
+  const getCategoryName = (categoryId: string | null) => {
+    if (!categoryId) return 'Sem categoria';
+    const category = categories.find(c => c.id === categoryId);
+    return category?.name || 'Sem categoria';
   };
 
-  const getPriorityIcon = (priority: string) => {
-    if (priority === 'high') return <AlertTriangle className="h-4 w-4 text-destructive" />;
-    if (priority === 'medium') return <Clock className="h-4 w-4 text-warning" />;
-    return <Clock className="h-4 w-4 text-muted-foreground" />;
+  const handleMarkAsPaid = async (id: string) => {
+    await markAsPaid(id);
   };
 
-  const handleMarkAsPaid = (id: string) => {
-    setReminders(prev => prev.map(reminder => 
-      reminder.id === id ? { ...reminder, status: 'paid' } : reminder
-    ));
-    toast({
-      title: "Conta marcada como paga!",
-      description: "O lembrete foi atualizado com sucesso.",
-    });
-  };
-
-  const handleDeleteReminder = (id: string) => {
-    setReminders(prev => prev.filter(reminder => reminder.id !== id));
-    toast({
-      title: "Lembrete excluído",
-      description: "O lembrete foi removido com sucesso.",
-    });
+  const handleDeleteReminder = async (id: string) => {
+    await deleteReminder(id);
   };
 
   const handleEditReminder = (id: string) => {
     const reminder = reminders.find(r => r.id === id);
     if (reminder) {
+      setEditingId(id);
       setNewReminder({
         title: reminder.title,
-        description: reminder.description,
-        amount: reminder.amount.toString(),
-        category: reminder.category,
-        priority: reminder.priority
+        description: reminder.description || '',
+        amount: reminder.amount?.toString() || '',
+        category_id: reminder.category_id || '',
       });
+      setSelectedDate(reminder.due_date ? new Date(reminder.due_date) : undefined);
       setShowNewReminder(true);
     }
   };
 
-  const handleCreateReminder = () => {
+  const handleSaveReminder = async () => {
     if (!newReminder.title || !newReminder.amount || !selectedDate) {
-      toast({
-        title: "Campos obrigatórios",
-        description: "Preencha título, valor e data de vencimento.",
-        variant: "destructive"
-      });
       return;
     }
 
-    const reminder = {
-      id: Date.now().toString(),
+    const reminderData = {
       title: newReminder.title,
-      description: newReminder.description,
+      description: newReminder.description || null,
       amount: parseFloat(newReminder.amount),
-      dueDate: format(selectedDate, 'yyyy-MM-dd'),
-      category: newReminder.category || 'utilities',
-      status: 'pending' as const,
-      priority: newReminder.priority || 'medium'
+      due_date: format(selectedDate, 'yyyy-MM-dd'),
+      category_id: newReminder.category_id || null,
     };
 
-    setReminders(prev => [...prev, reminder]);
-    setNewReminder({ title: '', description: '', amount: '', category: '', priority: '' });
+    if (editingId) {
+      await updateReminder(editingId, reminderData);
+      setEditingId(null);
+    } else {
+      await createReminder(reminderData);
+    }
+
+    setNewReminder({ title: '', description: '', amount: '', category_id: '' });
     setSelectedDate(undefined);
     setShowNewReminder(false);
-    
-    toast({
-      title: "Lembrete criado!",
-      description: "Novo lembrete adicionado com sucesso.",
-    });
   };
 
   const getDaysUntilDue = (dueDate: string) => {
     const due = new Date(dueDate);
     const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    due.setHours(0, 0, 0, 0);
     const diffTime = due.getTime() - today.getTime();
     const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
     return diffDays;
   };
+
+  const stats = useMemo(() => {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const sevenDaysFromNow = new Date(today);
+    sevenDaysFromNow.setDate(today.getDate() + 7);
+    
+    const dueToday = reminders.filter(r => {
+      if (r.is_completed) return false;
+      const due = new Date(r.due_date);
+      due.setHours(0, 0, 0, 0);
+      return due.getTime() === today.getTime();
+    });
+    
+    const dueNextWeek = reminders.filter(r => {
+      if (r.is_completed) return false;
+      const due = new Date(r.due_date);
+      due.setHours(0, 0, 0, 0);
+      return due > today && due <= sevenDaysFromNow;
+    });
+    
+    const paidThisMonth = reminders.filter(r => {
+      if (!r.is_completed) return false;
+      const due = new Date(r.due_date);
+      return due.getMonth() === today.getMonth() && due.getFullYear() === today.getFullYear();
+    });
+    
+    return {
+      dueToday: {
+        count: dueToday.length,
+        total: dueToday.reduce((sum, r) => sum + (Number(r.amount) || 0), 0)
+      },
+      dueNextWeek: {
+        count: dueNextWeek.length,
+        total: dueNextWeek.reduce((sum, r) => sum + (Number(r.amount) || 0), 0)
+      },
+      paidThisMonth: {
+        count: paidThisMonth.length,
+        total: paidThisMonth.reduce((sum, r) => sum + (Number(r.amount) || 0), 0)
+      }
+    };
+  }, [reminders]);
 
   return (
     <div className="min-h-screen bg-background">
@@ -193,8 +172,10 @@ const Reminders = () => {
               <CardTitle className="text-sm font-medium text-destructive">Vencendo Hoje</CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">2</div>
-              <p className="text-xs text-muted-foreground">R$ 1.450,00 total</p>
+              <div className="text-2xl font-bold">{stats.dueToday.count}</div>
+              <p className="text-xs text-muted-foreground">
+                R$ {stats.dueToday.total.toLocaleString('pt-BR', { minimumFractionDigits: 2 })} total
+              </p>
             </CardContent>
           </Card>
           
@@ -203,8 +184,10 @@ const Reminders = () => {
               <CardTitle className="text-sm font-medium text-warning">Próximos 7 dias</CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">1</div>
-              <p className="text-xs text-muted-foreground">R$ 180,00 total</p>
+              <div className="text-2xl font-bold">{stats.dueNextWeek.count}</div>
+              <p className="text-xs text-muted-foreground">
+                R$ {stats.dueNextWeek.total.toLocaleString('pt-BR', { minimumFractionDigits: 2 })} total
+              </p>
             </CardContent>
           </Card>
           
@@ -213,8 +196,10 @@ const Reminders = () => {
               <CardTitle className="text-sm font-medium text-success">Pagas este mês</CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">1</div>
-              <p className="text-xs text-muted-foreground">R$ 99,90 total</p>
+              <div className="text-2xl font-bold">{stats.paidThisMonth.count}</div>
+              <p className="text-xs text-muted-foreground">
+                R$ {stats.paidThisMonth.total.toLocaleString('pt-BR', { minimumFractionDigits: 2 })} total
+              </p>
             </CardContent>
           </Card>
         </div>
@@ -228,11 +213,20 @@ const Reminders = () => {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="space-y-4">
-              {reminders.map((reminder) => {
-                const daysUntilDue = getDaysUntilDue(reminder.dueDate);
-                const isOverdue = daysUntilDue < 0;
-                const isDueToday = daysUntilDue === 0;
+            {loading ? (
+              <div className="flex justify-center py-8">
+                <Loader2 className="h-8 w-8 animate-spin text-primary" />
+              </div>
+            ) : reminders.length === 0 ? (
+              <div className="text-center py-8 text-muted-foreground">
+                Nenhum lembrete cadastrado
+              </div>
+            ) : (
+              <div className="space-y-4">
+                {reminders.map((reminder) => {
+                  const daysUntilDue = getDaysUntilDue(reminder.due_date);
+                  const isOverdue = daysUntilDue < 0;
+                  const isDueToday = daysUntilDue === 0;
                 
                 return (
                   <div
@@ -241,13 +235,12 @@ const Reminders = () => {
                       "flex items-center justify-between p-4 rounded-lg border transition-colors",
                       isOverdue && "bg-destructive/5 border-destructive/20",
                       isDueToday && "bg-warning/5 border-warning/20",
-                      reminder.status === 'paid' && "bg-success/5 border-success/20 opacity-75"
+                      reminder.is_completed && "bg-success/5 border-success/20 opacity-75"
                     )}
                   >
                     <div className="flex items-center gap-4">
                       <div className="flex items-center gap-2">
-                        {getPriorityIcon(reminder.priority)}
-                        {reminder.status === 'paid' && (
+                        {reminder.is_completed && (
                           <CheckCircle className="h-4 w-4 text-success" />
                         )}
                       </div>
@@ -255,26 +248,30 @@ const Reminders = () => {
                       <div className="flex-1">
                         <div className="flex items-center gap-2 mb-1">
                           <h3 className="font-semibold">{reminder.title}</h3>
-                          <Badge className={getCategoryColor(reminder.category)}>
-                            {reminder.category}
+                          <Badge variant="outline">
+                            {getCategoryName(reminder.category_id)}
                           </Badge>
                         </div>
-                        <p className="text-sm text-muted-foreground">{reminder.description}</p>
+                        {reminder.description && (
+                          <p className="text-sm text-muted-foreground">{reminder.description}</p>
+                        )}
                         <div className="flex items-center gap-4 mt-2 text-xs text-muted-foreground">
                           <span className="flex items-center gap-1">
                             <CalendarIcon className="h-3 w-3" />
-                            {format(new Date(reminder.dueDate), 'dd/MM/yyyy', { locale: ptBR })}
+                            {format(new Date(reminder.due_date), 'dd/MM/yyyy', { locale: ptBR })}
                           </span>
-                          <span className="flex items-center gap-1">
-                            <DollarSign className="h-3 w-3" />
-                            R$ {reminder.amount.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
-                          </span>
+                          {reminder.amount && (
+                            <span className="flex items-center gap-1">
+                              <DollarSign className="h-3 w-3" />
+                              R$ {Number(reminder.amount).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                            </span>
+                          )}
                         </div>
                       </div>
                     </div>
                     
                     <div className="text-right">
-                      {reminder.status === 'pending' && (
+                      {!reminder.is_completed && (
                         <>
                           {isOverdue && (
                             <Badge variant="destructive" className="mb-2">
@@ -318,7 +315,7 @@ const Reminders = () => {
                           </div>
                         </>
                       )}
-                      {reminder.status === 'paid' && (
+                      {reminder.is_completed && (
                         <Badge variant="outline" className="text-success border-success">
                           Pago
                         </Badge>
@@ -327,7 +324,8 @@ const Reminders = () => {
                   </div>
                 );
               })}
-            </div>
+              </div>
+            )}
           </CardContent>
         </Card>
 
@@ -337,11 +335,16 @@ const Reminders = () => {
             <Card className="w-full max-w-md shadow-primary">
               <CardHeader>
                 <div className="flex items-center justify-between">
-                  <CardTitle>Novo Lembrete</CardTitle>
+                  <CardTitle>{editingId ? 'Editar Lembrete' : 'Novo Lembrete'}</CardTitle>
                   <Button
                     variant="ghost"
                     size="sm"
-                    onClick={() => setShowNewReminder(false)}
+                    onClick={() => {
+                      setShowNewReminder(false);
+                      setEditingId(null);
+                      setNewReminder({ title: '', description: '', amount: '', category_id: '' });
+                      setSelectedDate(undefined);
+                    }}
                   >
                     <X className="h-4 w-4" />
                   </Button>
@@ -412,31 +415,17 @@ const Reminders = () => {
                 </div>
                 
                 <div className="space-y-2">
-                  <Label htmlFor="category">Categoria</Label>
-                  <Select value={newReminder.category} onValueChange={(value) => setNewReminder(prev => ({ ...prev, category: value }))}>
+                  <Label htmlFor="category">Categoria (opcional)</Label>
+                  <Select value={newReminder.category_id} onValueChange={(value) => setNewReminder(prev => ({ ...prev, category_id: value }))}>
                     <SelectTrigger>
                       <SelectValue placeholder="Selecione uma categoria" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="utilities">Utilidades</SelectItem>
-                      <SelectItem value="credit-card">Cartão de Crédito</SelectItem>
-                      <SelectItem value="insurance">Seguro</SelectItem>
-                      <SelectItem value="subscription">Assinatura</SelectItem>
-                      <SelectItem value="loan">Empréstimo</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-                
-                <div className="space-y-2">
-                  <Label htmlFor="priority">Prioridade</Label>
-                  <Select value={newReminder.priority} onValueChange={(value) => setNewReminder(prev => ({ ...prev, priority: value }))}>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Selecione a prioridade" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="high">Alta</SelectItem>
-                      <SelectItem value="medium">Média</SelectItem>
-                      <SelectItem value="low">Baixa</SelectItem>
+                      {categories.map(category => (
+                        <SelectItem key={category.id} value={category.id}>
+                          {category.icon} {category.name}
+                        </SelectItem>
+                      ))}
                     </SelectContent>
                   </Select>
                 </div>
@@ -445,15 +434,20 @@ const Reminders = () => {
                   <Button 
                     variant="outline" 
                     className="flex-1"
-                    onClick={() => setShowNewReminder(false)}
+                    onClick={() => {
+                      setShowNewReminder(false);
+                      setEditingId(null);
+                      setNewReminder({ title: '', description: '', amount: '', category_id: '' });
+                      setSelectedDate(undefined);
+                    }}
                   >
                     Cancelar
                   </Button>
                   <Button 
                     className="flex-1 bg-gradient-primary"
-                    onClick={handleCreateReminder}
+                    onClick={handleSaveReminder}
                   >
-                    Criar Lembrete
+                    {editingId ? 'Salvar' : 'Criar Lembrete'}
                   </Button>
                 </div>
               </CardContent>
