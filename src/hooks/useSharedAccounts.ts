@@ -2,6 +2,20 @@ import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/hooks/useAuth';
+import { z } from 'zod';
+
+// Validation schema for shared account creation
+const sharedAccountSchema = z.object({
+  name: z.string().trim().min(2, 'Nome deve ter pelo menos 2 caracteres').max(100, 'Nome muito longo (máximo 100 caracteres)'),
+  description: z.string().trim().max(500, 'Descrição muito longa (máximo 500 caracteres)').optional().or(z.literal('')),
+  balance: z.number().min(0, 'Saldo não pode ser negativo').max(999999999.99, 'Valor muito alto').optional()
+});
+
+// Validation schema for adding money
+const addMoneySchema = z.object({
+  amount: z.number().positive('Valor deve ser positivo').max(999999999.99, 'Valor muito alto'),
+  description: z.string().trim().max(500, 'Descrição muito longa (máximo 500 caracteres)').optional().or(z.literal(''))
+});
 
 export interface SharedAccount {
   id: string;
@@ -72,12 +86,16 @@ export const useSharedAccounts = () => {
     }
 
     try {
+      // Validate input
+      const validatedAccount = sharedAccountSchema.parse(account);
+
       const { data, error } = await supabase
         .from('shared_accounts')
         .insert([{
-          ...account,
+          name: validatedAccount.name,
+          description: validatedAccount.description || null,
           created_by: user.id,
-          balance: account.balance || 0
+          balance: validatedAccount.balance || 0
         }])
         .select(`
           *,
@@ -95,6 +113,14 @@ export const useSharedAccounts = () => {
 
       return data;
     } catch (error) {
+      if (error instanceof z.ZodError) {
+        toast({
+          title: "Erro de validação",
+          description: error.errors[0].message,
+          variant: "destructive"
+        });
+        throw error;
+      }
       console.error('Error creating shared account:', error);
       toast({
         title: "Erro",
@@ -112,10 +138,13 @@ export const useSharedAccounts = () => {
     }
 
     try {
+      // Validate input
+      const validated = addMoneySchema.parse({ amount, description: description || '' });
+
       const { error } = await supabase.rpc('add_contribution_to_shared_account', {
         p_account_id: accountId,
-        p_amount: amount,
-        p_description: description || null
+        p_amount: validated.amount,
+        p_description: validated.description || null
       });
 
       if (error) throw error;
@@ -128,6 +157,14 @@ export const useSharedAccounts = () => {
         description: `R$ ${amount.toFixed(2)} adicionado à conta.`,
       });
     } catch (error) {
+      if (error instanceof z.ZodError) {
+        toast({
+          title: "Erro de validação",
+          description: error.errors[0].message,
+          variant: "destructive"
+        });
+        throw error;
+      }
       console.error('Error adding money to shared account:', error);
       toast({
         title: "Erro",
