@@ -85,6 +85,45 @@ export type Database = {
         }
         Relationships: []
       }
+      financial_goals: {
+        Row: {
+          category_id: string | null
+          created_at: string
+          current_amount: number
+          deadline: string | null
+          description: string | null
+          id: string
+          target_amount: number
+          title: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          category_id?: string | null
+          created_at?: string
+          current_amount?: number
+          deadline?: string | null
+          description?: string | null
+          id?: string
+          target_amount: number
+          title: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          category_id?: string | null
+          created_at?: string
+          current_amount?: number
+          deadline?: string | null
+          description?: string | null
+          id?: string
+          target_amount?: number
+          title?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           avatar_url: string | null
@@ -161,6 +200,39 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      report_exports: {
+        Row: {
+          created_at: string
+          filters: Json | null
+          format: string
+          id: string
+          period_end: string
+          period_start: string
+          report_type: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          filters?: Json | null
+          format: string
+          id?: string
+          period_end: string
+          period_start: string
+          report_type: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          filters?: Json | null
+          format?: string
+          id?: string
+          period_end?: string
+          period_start?: string
+          report_type?: string
+          user_id?: string
+        }
+        Relationships: []
       }
       shared_account_contributions: {
         Row: {
