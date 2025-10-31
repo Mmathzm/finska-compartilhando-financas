@@ -17,6 +17,10 @@ import {
   X
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import { useTransactions } from '@/hooks/useTransactions';
+import { useFinancialGoals } from '@/hooks/useFinancialGoals';
+import { useReportExports } from '@/hooks/useReportExports';
+import { useAnalytics } from '@/hooks/useAnalytics';
 import {
   LineChart,
   Line,
@@ -37,68 +41,44 @@ const Analytics = () => {
   const [selectedPeriod, setSelectedPeriod] = useState('6m');
   const [showExportDialog, setShowExportDialog] = useState(false);
   const { toast } = useToast();
+  
+  // Hooks para dados do banco
+  const { transactions, loading: loadingTransactions } = useTransactions();
+  const { goals, loading: loadingGoals } = useFinancialGoals();
+  const { createExport } = useReportExports();
+  
+  // Calcular período em meses
+  const monthsBack = selectedPeriod === '1m' ? 1 : selectedPeriod === '3m' ? 3 : selectedPeriod === '6m' ? 6 : 12;
+  
+  // Obter dados analíticos
+  const { monthlyData, categoryData, dailySpendingData, kpis } = useAnalytics(transactions, monthsBack);
+  
+  // Formatar metas para exibição
+  const formattedGoals = goals.map(goal => ({
+    name: goal.title,
+    current: goal.current_amount,
+    target: goal.target_amount,
+    percentage: goal.target_amount > 0 ? Math.round((goal.current_amount / goal.target_amount) * 100) : 0
+  }));
 
-  const monthlyData = [
-    { month: 'Jul', receitas: 4200, gastos: 3100, economia: 1100 },
-    { month: 'Ago', receitas: 3800, gastos: 2900, economia: 900 },
-    { month: 'Set', receitas: 4500, gastos: 3400, economia: 1100 },
-    { month: 'Out', receitas: 4100, gastos: 3200, economia: 900 },
-    { month: 'Nov', receitas: 4300, gastos: 2800, economia: 1500 },
-    { month: 'Dez', receitas: 4700, gastos: 3600, economia: 1100 },
-  ];
-
-  const categoryData = [
-    { name: 'Alimentação', value: 1200, color: '#8B5CF6' },
-    { name: 'Transporte', value: 800, color: '#A855F7' },
-    { name: 'Moradia', value: 1500, color: '#C084FC' },
-    { name: 'Lazer', value: 600, color: '#DDD6FE' },
-    { name: 'Saúde', value: 400, color: '#E9D5FF' },
-    { name: 'Outros', value: 300, color: '#F3E8FF' },
-  ];
-
-  const dailySpendingData = [
-    { day: 1, valor: 120 },
-    { day: 2, valor: 80 },
-    { day: 3, valor: 200 },
-    { day: 4, valor: 150 },
-    { day: 5, valor: 300 },
-    { day: 6, valor: 180 },
-    { day: 7, valor: 90 },
-    { day: 8, valor: 250 },
-    { day: 9, valor: 170 },
-    { day: 10, valor: 220 },
-    { day: 11, valor: 110 },
-    { day: 12, valor: 340 },
-    { day: 13, valor: 180 },
-    { day: 14, valor: 160 },
-    { day: 15, valor: 290 },
-    { day: 16, valor: 200 },
-    { day: 17, valor: 130 },
-    { day: 18, valor: 270 },
-    { day: 19, valor: 190 },
-    { day: 20, valor: 150 },
-  ];
-
-  const goals = [
-    { name: 'Economia Mensal', current: 1100, target: 1500, percentage: 73 },
-    { name: 'Limite Alimentação', current: 1200, target: 1000, percentage: 120 },
-    { name: 'Fundo de Emergência', current: 8500, target: 12000, percentage: 71 },
-  ];
-
-  const handleExportData = (format: string) => {
-    toast({
-      title: "Exportando dados...",
-      description: `Relatório em ${format.toUpperCase()} será baixado em breve.`,
-    });
-    setShowExportDialog(false);
+  const handleExportData = async (format: string) => {
+    const now = new Date();
+    const periodStart = new Date(now);
+    periodStart.setMonth(now.getMonth() - monthsBack);
     
-    // Simular download
-    setTimeout(() => {
-      toast({
-        title: "Download concluído!",
-        description: "Seu relatório foi baixado com sucesso.",
+    try {
+      await createExport({
+        report_type: 'analytics',
+        format: format,
+        period_start: periodStart.toISOString().split('T')[0],
+        period_end: now.toISOString().split('T')[0],
+        filters: { period: selectedPeriod }
       });
-    }, 2000);
+      
+      setShowExportDialog(false);
+    } catch (error) {
+      // Erro já tratado no hook
+    }
   };
 
   const handleShareReport = () => {
@@ -114,6 +94,19 @@ const Analytics = () => {
       description: "Funcionalidade de filtros avançados será implementada.",
     });
   };
+
+  const loading = loadingTransactions || loadingGoals;
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto"></div>
+          <p className="mt-4 text-muted-foreground">Carregando análises...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-background">
@@ -172,10 +165,12 @@ const Analytics = () => {
               <CardTitle className="text-sm font-medium opacity-90">Receita Média</CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">R$ 4.267,00</div>
+              <div className="text-2xl font-bold">
+                R$ {kpis.avgIncome.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+              </div>
               <div className="flex items-center gap-1 text-xs mt-1">
-                <TrendingUp className="h-3 w-3" />
-                <span>+8.2% vs mês anterior</span>
+                {kpis.incomeChange >= 0 ? <TrendingUp className="h-3 w-3" /> : <TrendingDown className="h-3 w-3" />}
+                <span>{kpis.incomeChange >= 0 ? '+' : ''}{kpis.incomeChange.toFixed(1)}% vs mês anterior</span>
               </div>
             </CardContent>
           </Card>
@@ -185,10 +180,12 @@ const Analytics = () => {
               <CardTitle className="text-sm font-medium text-muted-foreground">Gasto Médio</CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">R$ 3.167,00</div>
+              <div className="text-2xl font-bold">
+                R$ {kpis.avgExpenses.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+              </div>
               <div className="flex items-center gap-1 text-xs mt-1 text-success">
-                <TrendingDown className="h-3 w-3" />
-                <span>-3.1% vs mês anterior</span>
+                {kpis.expenseChange <= 0 ? <TrendingDown className="h-3 w-3" /> : <TrendingUp className="h-3 w-3" />}
+                <span>{kpis.expenseChange >= 0 ? '+' : ''}{kpis.expenseChange.toFixed(1)}% vs mês anterior</span>
               </div>
             </CardContent>
           </Card>
@@ -198,10 +195,12 @@ const Analytics = () => {
               <CardTitle className="text-sm font-medium text-muted-foreground">Economia Média</CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">R$ 1.100,00</div>
+              <div className="text-2xl font-bold">
+                R$ {kpis.avgSavings.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+              </div>
               <div className="flex items-center gap-1 text-xs mt-1 text-success">
-                <TrendingUp className="h-3 w-3" />
-                <span>+15.8% vs mês anterior</span>
+                {kpis.savingsChange >= 0 ? <TrendingUp className="h-3 w-3" /> : <TrendingDown className="h-3 w-3" />}
+                <span>{kpis.savingsChange >= 0 ? '+' : ''}{kpis.savingsChange.toFixed(1)}% vs mês anterior</span>
               </div>
             </CardContent>
           </Card>
@@ -211,7 +210,7 @@ const Analytics = () => {
               <CardTitle className="text-sm font-medium text-muted-foreground">Taxa de Economia</CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">25.8%</div>
+              <div className="text-2xl font-bold">{kpis.savingsRate.toFixed(1)}%</div>
               <div className="flex items-center gap-1 text-xs mt-1 text-success">
                 <Target className="h-3 w-3" />
                 <span>Meta: 30%</span>
@@ -324,7 +323,12 @@ const Analytics = () => {
           </CardHeader>
           <CardContent>
             <div className="space-y-6">
-              {goals.map((goal, index) => (
+              {formattedGoals.length === 0 ? (
+                <p className="text-center text-muted-foreground py-8">
+                  Nenhuma meta financeira cadastrada ainda.
+                </p>
+              ) : (
+                formattedGoals.map((goal, index) => (
                 <div key={index} className="space-y-2">
                   <div className="flex items-center justify-between">
                     <h3 className="font-medium">{goal.name}</h3>
@@ -352,7 +356,7 @@ const Analytics = () => {
                     />
                   </div>
                 </div>
-              ))}
+              )))}
             </div>
           </CardContent>
         </Card>
