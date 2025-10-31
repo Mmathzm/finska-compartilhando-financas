@@ -234,6 +234,39 @@ export type Database = {
         }
         Relationships: []
       }
+      saved_filters: {
+        Row: {
+          created_at: string | null
+          description: string | null
+          filter_config: Json
+          id: string
+          is_default: boolean | null
+          name: string
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          description?: string | null
+          filter_config: Json
+          id?: string
+          is_default?: boolean | null
+          name: string
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          description?: string | null
+          filter_config?: Json
+          id?: string
+          is_default?: boolean | null
+          name?: string
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       shared_account_contributions: {
         Row: {
           amount: number
@@ -369,6 +402,95 @@ export type Database = {
         }
         Relationships: []
       }
+      shared_report_access: {
+        Row: {
+          accessed_at: string | null
+          can_edit: boolean | null
+          created_at: string | null
+          email: string | null
+          id: string
+          shared_report_id: string
+          user_id: string | null
+        }
+        Insert: {
+          accessed_at?: string | null
+          can_edit?: boolean | null
+          created_at?: string | null
+          email?: string | null
+          id?: string
+          shared_report_id: string
+          user_id?: string | null
+        }
+        Update: {
+          accessed_at?: string | null
+          can_edit?: boolean | null
+          created_at?: string | null
+          email?: string | null
+          id?: string
+          shared_report_id?: string
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "shared_report_access_shared_report_id_fkey"
+            columns: ["shared_report_id"]
+            isOneToOne: false
+            referencedRelation: "shared_reports"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      shared_reports: {
+        Row: {
+          access_token: string | null
+          created_at: string | null
+          description: string | null
+          expires_at: string | null
+          id: string
+          is_public: boolean | null
+          owner_id: string
+          period_end: string
+          period_start: string
+          report_config: Json
+          report_type: string
+          title: string
+          updated_at: string | null
+          views_count: number | null
+        }
+        Insert: {
+          access_token?: string | null
+          created_at?: string | null
+          description?: string | null
+          expires_at?: string | null
+          id?: string
+          is_public?: boolean | null
+          owner_id: string
+          period_end: string
+          period_start: string
+          report_config: Json
+          report_type: string
+          title: string
+          updated_at?: string | null
+          views_count?: number | null
+        }
+        Update: {
+          access_token?: string | null
+          created_at?: string | null
+          description?: string | null
+          expires_at?: string | null
+          id?: string
+          is_public?: boolean | null
+          owner_id?: string
+          period_end?: string
+          period_start?: string
+          report_config?: Json
+          report_type?: string
+          title?: string
+          updated_at?: string | null
+          views_count?: number | null
+        }
+        Relationships: []
+      }
       transactions: {
         Row: {
           amount: number
@@ -432,8 +554,13 @@ export type Database = {
         Args: { p_account_id: string; p_amount: number; p_description?: string }
         Returns: undefined
       }
+      cleanup_expired_shared_reports: { Args: never; Returns: undefined }
       create_default_categories: {
         Args: { user_uuid: string }
+        Returns: undefined
+      }
+      increment_report_views: {
+        Args: { p_access_token?: string; p_report_id: string }
         Returns: undefined
       }
       is_shared_account_member: {

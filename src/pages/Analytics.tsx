@@ -21,6 +21,8 @@ import { useTransactions } from '@/hooks/useTransactions';
 import { useFinancialGoals } from '@/hooks/useFinancialGoals';
 import { useReportExports } from '@/hooks/useReportExports';
 import { useAnalytics } from '@/hooks/useAnalytics';
+import { FilterModal } from '@/components/FilterModal';
+import { ShareReportModal } from '@/components/ShareReportModal';
 import {
   LineChart,
   Line,
@@ -40,6 +42,9 @@ import {
 const Analytics = () => {
   const [selectedPeriod, setSelectedPeriod] = useState('6m');
   const [showExportDialog, setShowExportDialog] = useState(false);
+  const [showFilterModal, setShowFilterModal] = useState(false);
+  const [showShareModal, setShowShareModal] = useState(false);
+  const [appliedFilters, setAppliedFilters] = useState<any>(null);
   const { toast } = useToast();
   
   // Hooks para dados do banco
@@ -82,16 +87,19 @@ const Analytics = () => {
   };
 
   const handleShareReport = () => {
-    toast({
-      title: "Link copiado!",
-      description: "O link do relatório foi copiado para a área de transferência.",
-    });
+    setShowShareModal(true);
   };
 
   const handleFilterData = () => {
+    setShowFilterModal(true);
+  };
+
+  const handleApplyFilter = (filter: any) => {
+    setAppliedFilters(filter);
+    setSelectedPeriod(filter.period || '6m');
     toast({
-      title: "Filtros",
-      description: "Funcionalidade de filtros avançados será implementada.",
+      title: "Filtros aplicados",
+      description: "Os dados foram filtrados com sucesso.",
     });
   };
 
@@ -138,6 +146,11 @@ const Analytics = () => {
             >
               <Filter className="h-4 w-4 mr-2" />
               Filtros
+              {appliedFilters && (
+                <span className="ml-1 px-1.5 py-0.5 text-xs bg-primary text-primary-foreground rounded-full">
+                  ativo
+                </span>
+              )}
             </Button>
             <Button 
               variant="outline" 
@@ -429,6 +442,25 @@ const Analytics = () => {
             </div>
           </DialogContent>
         </Dialog>
+
+        {/* Modal de Filtros */}
+        <FilterModal
+          open={showFilterModal}
+          onOpenChange={setShowFilterModal}
+          onApplyFilter={handleApplyFilter}
+        />
+
+        {/* Modal de Compartilhamento */}
+        <ShareReportModal
+          open={showShareModal}
+          onOpenChange={setShowShareModal}
+          reportData={{
+            period: selectedPeriod,
+            monthlyData,
+            categoryData,
+            kpis
+          }}
+        />
       </div>
     </div>
   );
