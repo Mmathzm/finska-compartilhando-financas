@@ -9,6 +9,9 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { QrCode, CreditCard, Send, Calendar, Plus } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import { usePixTransactions } from '@/hooks/usePixTransactions';
+import { useBankTransfers } from '@/hooks/useBankTransfers';
+import { useInstallmentPlans } from '@/hooks/useInstallmentPlans';
 
 const Transactions = () => {
   const [pixData, setPixData] = useState({ key: '', amount: '', description: '' });
@@ -17,11 +20,14 @@ const Transactions = () => {
     description: '', 
     amount: '', 
     installments: '1',
-    type: 'expense' 
+    type: 'expense' as 'expense' | 'income'
   });
   const { toast } = useToast();
+  const { addTransaction: addPixTransaction } = usePixTransactions();
+  const { addTransfer } = useBankTransfers();
+  const { addPlan } = useInstallmentPlans();
 
-  const handlePixTransaction = () => {
+  const handlePixTransaction = async () => {
     if (!pixData.key || !pixData.amount) {
       toast({
         title: "Erro",
@@ -31,14 +37,20 @@ const Transactions = () => {
       return;
     }
 
-    toast({
-      title: "PIX realizado com sucesso!",
-      description: `Transferência de R$ ${pixData.amount} para ${pixData.key}`,
-    });
-    setPixData({ key: '', amount: '', description: '' });
+    try {
+      await addPixTransaction({
+        pix_key: pixData.key,
+        amount: parseFloat(pixData.amount),
+        description: pixData.description || undefined,
+        transaction_type: 'send'
+      });
+      setPixData({ key: '', amount: '', description: '' });
+    } catch (error) {
+      // Error already handled by hook
+    }
   };
 
-  const handleTransfer = () => {
+  const handleTransfer = async () => {
     if (!transferData.account || !transferData.amount) {
       toast({
         title: "Erro",
@@ -48,14 +60,19 @@ const Transactions = () => {
       return;
     }
 
-    toast({
-      title: "Transferência realizada!",
-      description: `Transferência de R$ ${transferData.amount} para conta ${transferData.account}`,
-    });
-    setTransferData({ account: '', amount: '', description: '' });
+    try {
+      await addTransfer({
+        account_type: transferData.account as 'savings' | 'checking' | 'investment' | 'external',
+        amount: parseFloat(transferData.amount),
+        description: transferData.description || undefined
+      });
+      setTransferData({ account: '', amount: '', description: '' });
+    } catch (error) {
+      // Error already handled by hook
+    }
   };
 
-  const handleInstallmentTransaction = () => {
+  const handleInstallmentTransaction = async () => {
     if (!installmentData.description || !installmentData.amount) {
       toast({
         title: "Erro",
@@ -65,14 +82,17 @@ const Transactions = () => {
       return;
     }
 
-    const totalAmount = parseFloat(installmentData.amount);
-    const installmentValue = totalAmount / parseInt(installmentData.installments);
-    
-    toast({
-      title: "Transação parcelada criada!",
-      description: `${installmentData.installments}x de R$ ${installmentValue.toFixed(2)}`,
-    });
-    setInstallmentData({ description: '', amount: '', installments: '1', type: 'expense' });
+    try {
+      await addPlan({
+        description: installmentData.description,
+        total_amount: parseFloat(installmentData.amount),
+        installment_count: parseInt(installmentData.installments),
+        type: installmentData.type
+      });
+      setInstallmentData({ description: '', amount: '', installments: '1', type: 'expense' });
+    } catch (error) {
+      // Error already handled by hook
+    }
   };
 
   const generateQRCode = () => {
@@ -297,7 +317,7 @@ const Transactions = () => {
                 <Label htmlFor="installment-type">Tipo</Label>
                 <Select 
                   value={installmentData.type}
-                  onValueChange={(value) => setInstallmentData({ ...installmentData, type: value })}
+                  onValueChange={(value) => setInstallmentData({ ...installmentData, type: value as 'expense' | 'income' })}
                 >
                   <SelectTrigger>
                     <SelectValue />

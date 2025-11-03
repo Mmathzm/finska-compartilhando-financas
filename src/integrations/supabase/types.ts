@@ -14,6 +14,39 @@ export type Database = {
   }
   public: {
     Tables: {
+      bank_transfers: {
+        Row: {
+          account_type: string
+          amount: number
+          created_at: string
+          description: string | null
+          id: string
+          status: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          account_type: string
+          amount: number
+          created_at?: string
+          description?: string | null
+          id?: string
+          status?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          account_type?: string
+          amount?: number
+          created_at?: string
+          description?: string | null
+          id?: string
+          status?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       budgets: {
         Row: {
           amount: number
@@ -119,6 +152,98 @@ export type Database = {
           id?: string
           target_amount?: number
           title?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      installment_plans: {
+        Row: {
+          category_id: string | null
+          created_at: string
+          current_installment: number
+          description: string
+          id: string
+          installment_count: number
+          installment_value: number
+          start_date: string
+          status: string
+          total_amount: number
+          type: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          category_id?: string | null
+          created_at?: string
+          current_installment?: number
+          description: string
+          id?: string
+          installment_count: number
+          installment_value: number
+          start_date?: string
+          status?: string
+          total_amount: number
+          type: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          category_id?: string | null
+          created_at?: string
+          current_installment?: number
+          description?: string
+          id?: string
+          installment_count?: number
+          installment_value?: number
+          start_date?: string
+          status?: string
+          total_amount?: number
+          type?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "installment_plans_category_id_fkey"
+            columns: ["category_id"]
+            isOneToOne: false
+            referencedRelation: "categories"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      pix_transactions: {
+        Row: {
+          amount: number
+          created_at: string
+          description: string | null
+          id: string
+          pix_key: string
+          status: string
+          transaction_type: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          amount: number
+          created_at?: string
+          description?: string | null
+          id?: string
+          pix_key: string
+          status?: string
+          transaction_type: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          amount?: number
+          created_at?: string
+          description?: string | null
+          id?: string
+          pix_key?: string
+          status?: string
+          transaction_type?: string
           updated_at?: string
           user_id?: string
         }
