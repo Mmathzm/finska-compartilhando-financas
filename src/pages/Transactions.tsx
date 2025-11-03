@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { QRCodeSVG } from 'qrcode.react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -22,6 +23,7 @@ const Transactions = () => {
     installments: '1',
     type: 'expense' as 'expense' | 'income'
   });
+  const [showQRCode, setShowQRCode] = useState(false);
   const { toast } = useToast();
   const { addTransaction: addPixTransaction } = usePixTransactions();
   const { addTransfer } = useBankTransfers();
@@ -105,6 +107,7 @@ const Transactions = () => {
       return;
     }
 
+    setShowQRCode(true);
     toast({
       title: "QR Code gerado!",
       description: "QR Code criado com sucesso para o PIX",
@@ -231,13 +234,20 @@ const Transactions = () => {
                 Gerar QR Code
               </Button>
               
-              {pixData.key && pixData.amount && (
+              {showQRCode && pixData.key && pixData.amount && (
                 <div className="border-2 border-dashed border-border rounded-lg p-8 text-center">
-                  <QrCode className="h-24 w-24 mx-auto text-muted-foreground mb-4" />
-                  <p className="text-sm text-muted-foreground">
+                  <div className="flex justify-center mb-4">
+                    <QRCodeSVG 
+                      value={`pix://${pixData.key}?amount=${pixData.amount}${pixData.description ? `&description=${encodeURIComponent(pixData.description)}` : ''}`}
+                      size={200}
+                      level="H"
+                      includeMargin={true}
+                    />
+                  </div>
+                  <p className="text-sm font-medium text-foreground mb-1">
                     QR Code para receber R$ {pixData.amount}
                   </p>
-                  <p className="text-xs text-muted-foreground mt-2">
+                  <p className="text-xs text-muted-foreground">
                     Chave: {pixData.key}
                   </p>
                 </div>
