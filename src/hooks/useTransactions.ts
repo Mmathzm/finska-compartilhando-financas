@@ -54,7 +54,6 @@ export const useTransactions = () => {
       if (error) throw error;
       setTransactions(data || []);
     } catch (error) {
-      console.error('Error fetching transactions:', error);
       toast({
         title: "Erro",
         description: "Não foi possível carregar as transações.",
@@ -94,7 +93,6 @@ export const useTransactions = () => {
 
       return data;
     } catch (error) {
-      console.error('Error adding transaction:', error);
       toast({
         title: "Erro",
         description: "Não foi possível adicionar a transação.",
@@ -120,7 +118,6 @@ export const useTransactions = () => {
         description: "Transação removida com sucesso.",
       });
     } catch (error) {
-      console.error('Error deleting transaction:', error);
       toast({
         title: "Erro",
         description: "Não foi possível remover a transação.",
@@ -153,7 +150,6 @@ export const useTransactions = () => {
 
       return data;
     } catch (error) {
-      console.error('Error updating transaction:', error);
       toast({
         title: "Erro",
         description: "Não foi possível atualizar a transação.",
