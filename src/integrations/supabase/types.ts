@@ -14,6 +14,42 @@ export type Database = {
   }
   public: {
     Tables: {
+      achievements: {
+        Row: {
+          category: string | null
+          created_at: string
+          description: string
+          icon: string
+          id: string
+          points: number
+          requirement_type: string
+          requirement_value: number
+          title: string
+        }
+        Insert: {
+          category?: string | null
+          created_at?: string
+          description: string
+          icon: string
+          id?: string
+          points: number
+          requirement_type: string
+          requirement_value: number
+          title: string
+        }
+        Update: {
+          category?: string | null
+          created_at?: string
+          description?: string
+          icon?: string
+          id?: string
+          points?: number
+          requirement_type?: string
+          requirement_value?: number
+          title?: string
+        }
+        Relationships: []
+      }
       bank_transfers: {
         Row: {
           account_type: string
@@ -118,6 +154,59 @@ export type Database = {
         }
         Relationships: []
       }
+      challenges: {
+        Row: {
+          category: string
+          created_at: string
+          description: string
+          difficulty: string
+          duration_days: number
+          id: string
+          is_active: boolean
+          requirement_category_id: string | null
+          requirement_type: string
+          requirement_value: number | null
+          reward_points: number
+          title: string
+        }
+        Insert: {
+          category: string
+          created_at?: string
+          description: string
+          difficulty: string
+          duration_days: number
+          id?: string
+          is_active?: boolean
+          requirement_category_id?: string | null
+          requirement_type: string
+          requirement_value?: number | null
+          reward_points: number
+          title: string
+        }
+        Update: {
+          category?: string
+          created_at?: string
+          description?: string
+          difficulty?: string
+          duration_days?: number
+          id?: string
+          is_active?: boolean
+          requirement_category_id?: string | null
+          requirement_type?: string
+          requirement_value?: number | null
+          reward_points?: number
+          title?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "challenges_requirement_category_id_fkey"
+            columns: ["requirement_category_id"]
+            isOneToOne: false
+            referencedRelation: "categories"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       financial_goals: {
         Row: {
           category_id: string | null
@@ -154,6 +243,36 @@ export type Database = {
           title?: string
           updated_at?: string
           user_id?: string
+        }
+        Relationships: []
+      }
+      financial_tips: {
+        Row: {
+          category: string
+          created_at: string
+          description: string
+          id: string
+          is_active: boolean
+          priority: number
+          title: string
+        }
+        Insert: {
+          category: string
+          created_at?: string
+          description: string
+          id?: string
+          is_active?: boolean
+          priority?: number
+          title: string
+        }
+        Update: {
+          category?: string
+          created_at?: string
+          description?: string
+          id?: string
+          is_active?: boolean
+          priority?: number
+          title?: string
         }
         Relationships: []
       }
@@ -212,6 +331,33 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      motivational_quotes: {
+        Row: {
+          author: string | null
+          category: string | null
+          created_at: string
+          id: string
+          is_active: boolean
+          quote: string
+        }
+        Insert: {
+          author?: string | null
+          category?: string | null
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          quote: string
+        }
+        Update: {
+          author?: string | null
+          category?: string | null
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          quote?: string
+        }
+        Relationships: []
       }
       pix_transactions: {
         Row: {
@@ -669,6 +815,133 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      user_achievements: {
+        Row: {
+          achievement_id: string
+          created_at: string
+          earned: boolean
+          earned_at: string | null
+          id: string
+          progress: number
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          achievement_id: string
+          created_at?: string
+          earned?: boolean
+          earned_at?: string | null
+          id?: string
+          progress?: number
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          achievement_id?: string
+          created_at?: string
+          earned?: boolean
+          earned_at?: string | null
+          id?: string
+          progress?: number
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_achievements_achievement_id_fkey"
+            columns: ["achievement_id"]
+            isOneToOne: false
+            referencedRelation: "achievements"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      user_challenges: {
+        Row: {
+          challenge_id: string
+          completed_at: string | null
+          created_at: string
+          id: string
+          progress: number
+          started_at: string
+          status: string
+          target: number
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          challenge_id: string
+          completed_at?: string | null
+          created_at?: string
+          id?: string
+          progress?: number
+          started_at?: string
+          status?: string
+          target: number
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          challenge_id?: string
+          completed_at?: string | null
+          created_at?: string
+          id?: string
+          progress?: number
+          started_at?: string
+          status?: string
+          target?: number
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_challenges_challenge_id_fkey"
+            columns: ["challenge_id"]
+            isOneToOne: false
+            referencedRelation: "challenges"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      user_stats: {
+        Row: {
+          created_at: string
+          current_streak: number
+          id: string
+          last_activity_date: string | null
+          level: number
+          level_name: string
+          longest_streak: number
+          total_points: number
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          current_streak?: number
+          id?: string
+          last_activity_date?: string | null
+          level?: number
+          level_name?: string
+          longest_streak?: number
+          total_points?: number
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          current_streak?: number
+          id?: string
+          last_activity_date?: string | null
+          level?: number
+          level_name?: string
+          longest_streak?: number
+          total_points?: number
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
       }
     }
     Views: {
