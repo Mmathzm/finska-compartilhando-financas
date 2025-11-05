@@ -359,6 +359,63 @@ export type Database = {
         }
         Relationships: []
       }
+      payment_methods: {
+        Row: {
+          account_type: string | null
+          bank_name: string | null
+          card_brand: string | null
+          card_holder_name: string | null
+          card_last_four: string | null
+          created_at: string
+          expires_at: string | null
+          id: string
+          is_active: boolean
+          is_default: boolean
+          method_type: string
+          pix_key: string | null
+          pix_key_type: string | null
+          updated_at: string
+          user_id: string
+          wallet_provider: string | null
+        }
+        Insert: {
+          account_type?: string | null
+          bank_name?: string | null
+          card_brand?: string | null
+          card_holder_name?: string | null
+          card_last_four?: string | null
+          created_at?: string
+          expires_at?: string | null
+          id?: string
+          is_active?: boolean
+          is_default?: boolean
+          method_type: string
+          pix_key?: string | null
+          pix_key_type?: string | null
+          updated_at?: string
+          user_id: string
+          wallet_provider?: string | null
+        }
+        Update: {
+          account_type?: string | null
+          bank_name?: string | null
+          card_brand?: string | null
+          card_holder_name?: string | null
+          card_last_four?: string | null
+          created_at?: string
+          expires_at?: string | null
+          id?: string
+          is_active?: boolean
+          is_default?: boolean
+          method_type?: string
+          pix_key?: string | null
+          pix_key_type?: string | null
+          updated_at?: string
+          user_id?: string
+          wallet_provider?: string | null
+        }
+        Relationships: []
+      }
       pix_transactions: {
         Row: {
           amount: number
@@ -857,6 +914,39 @@ export type Database = {
           },
         ]
       }
+      user_activity_logs: {
+        Row: {
+          action_description: string
+          activity_type: string
+          created_at: string
+          id: string
+          ip_address: string | null
+          metadata: Json | null
+          user_agent: string | null
+          user_id: string
+        }
+        Insert: {
+          action_description: string
+          activity_type: string
+          created_at?: string
+          id?: string
+          ip_address?: string | null
+          metadata?: Json | null
+          user_agent?: string | null
+          user_id: string
+        }
+        Update: {
+          action_description?: string
+          activity_type?: string
+          created_at?: string
+          id?: string
+          ip_address?: string | null
+          metadata?: Json | null
+          user_agent?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       user_challenges: {
         Row: {
           challenge_id: string
@@ -903,6 +993,153 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      user_notification_preferences: {
+        Row: {
+          budget_alerts: boolean
+          created_at: string
+          email_notifications: boolean
+          goal_updates: boolean
+          id: string
+          marketing_emails: boolean
+          payment_reminders: boolean
+          push_notifications: boolean
+          transaction_alerts: boolean
+          updated_at: string
+          user_id: string
+          weekly_reports: boolean
+        }
+        Insert: {
+          budget_alerts?: boolean
+          created_at?: string
+          email_notifications?: boolean
+          goal_updates?: boolean
+          id?: string
+          marketing_emails?: boolean
+          payment_reminders?: boolean
+          push_notifications?: boolean
+          transaction_alerts?: boolean
+          updated_at?: string
+          user_id: string
+          weekly_reports?: boolean
+        }
+        Update: {
+          budget_alerts?: boolean
+          created_at?: string
+          email_notifications?: boolean
+          goal_updates?: boolean
+          id?: string
+          marketing_emails?: boolean
+          payment_reminders?: boolean
+          push_notifications?: boolean
+          transaction_alerts?: boolean
+          updated_at?: string
+          user_id?: string
+          weekly_reports?: boolean
+        }
+        Relationships: []
+      }
+      user_preferences: {
+        Row: {
+          auto_backup: boolean
+          compact_view: boolean
+          created_at: string
+          currency: string
+          date_format: string
+          decimal_separator: string
+          first_day_of_week: number
+          id: string
+          language: string
+          show_animations: boolean
+          theme: string
+          thousands_separator: string
+          time_format: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          auto_backup?: boolean
+          compact_view?: boolean
+          created_at?: string
+          currency?: string
+          date_format?: string
+          decimal_separator?: string
+          first_day_of_week?: number
+          id?: string
+          language?: string
+          show_animations?: boolean
+          theme?: string
+          thousands_separator?: string
+          time_format?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          auto_backup?: boolean
+          compact_view?: boolean
+          created_at?: string
+          currency?: string
+          date_format?: string
+          decimal_separator?: string
+          first_day_of_week?: number
+          id?: string
+          language?: string
+          show_animations?: boolean
+          theme?: string
+          thousands_separator?: string
+          time_format?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      user_privacy_settings: {
+        Row: {
+          allow_data_collection: boolean
+          allow_third_party_sharing: boolean
+          biometric_enabled: boolean
+          created_at: string
+          id: string
+          login_alerts: boolean
+          profile_visibility: string
+          session_timeout: number
+          show_financial_stats: boolean
+          suspicious_activity_alerts: boolean
+          two_factor_enabled: boolean
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          allow_data_collection?: boolean
+          allow_third_party_sharing?: boolean
+          biometric_enabled?: boolean
+          created_at?: string
+          id?: string
+          login_alerts?: boolean
+          profile_visibility?: string
+          session_timeout?: number
+          show_financial_stats?: boolean
+          suspicious_activity_alerts?: boolean
+          two_factor_enabled?: boolean
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          allow_data_collection?: boolean
+          allow_third_party_sharing?: boolean
+          biometric_enabled?: boolean
+          created_at?: string
+          id?: string
+          login_alerts?: boolean
+          profile_visibility?: string
+          session_timeout?: number
+          show_financial_stats?: boolean
+          suspicious_activity_alerts?: boolean
+          two_factor_enabled?: boolean
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
       }
       user_stats: {
         Row: {
