@@ -53,7 +53,16 @@ const Analytics = () => {
   const { createExport } = useReportExports();
   
   // Calcular período em meses
-  const monthsBack = selectedPeriod === '1m' ? 1 : selectedPeriod === '3m' ? 3 : selectedPeriod === '6m' ? 6 : 12;
+  const getMonthsBack = () => {
+    switch (selectedPeriod) {
+      case '1m': return 1;
+      case '3m': return 3;
+      case '6m': return 6;
+      case '1a': return 12;
+      default: return 6;
+    }
+  };
+  const monthsBack = getMonthsBack();
   
   // Obter dados analíticos
   const { monthlyData, categoryData, dailySpendingData, kpis } = useAnalytics(transactions, monthsBack);
