@@ -207,6 +207,36 @@ export type Database = {
           },
         ]
       }
+      exchange_rates: {
+        Row: {
+          created_at: string
+          currency_code: string
+          currency_name: string
+          id: string
+          last_updated: string
+          rate_to_brl: number
+          source: string | null
+        }
+        Insert: {
+          created_at?: string
+          currency_code: string
+          currency_name: string
+          id?: string
+          last_updated?: string
+          rate_to_brl: number
+          source?: string | null
+        }
+        Update: {
+          created_at?: string
+          currency_code?: string
+          currency_name?: string
+          id?: string
+          last_updated?: string
+          rate_to_brl?: number
+          source?: string | null
+        }
+        Relationships: []
+      }
       financial_goals: {
         Row: {
           category_id: string | null
@@ -993,6 +1023,39 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      user_currency_conversions: {
+        Row: {
+          created_at: string
+          exchange_rate: number
+          from_amount: number
+          from_currency: string
+          id: string
+          to_amount: number
+          to_currency: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          exchange_rate: number
+          from_amount: number
+          from_currency: string
+          id?: string
+          to_amount: number
+          to_currency: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          exchange_rate?: number
+          from_amount?: number
+          from_currency?: string
+          id?: string
+          to_amount?: number
+          to_currency?: string
+          user_id?: string
+        }
+        Relationships: []
       }
       user_notification_preferences: {
         Row: {
