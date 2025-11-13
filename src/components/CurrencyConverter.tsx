@@ -6,13 +6,17 @@ import { DollarSign, Euro, RefreshCw, ArrowRightLeft } from 'lucide-react';
 import { useExchangeRates } from '@/hooks/useExchangeRates';
 import { useToast } from '@/hooks/use-toast';
 
-const CurrencyConverter = () => {
+interface CurrencyConverterProps {
+  selectedCurrency: 'BRL' | 'USD' | 'EUR';
+  onCurrencyChange: (currency: 'BRL' | 'USD' | 'EUR') => void;
+}
+
+const CurrencyConverter = ({ selectedCurrency, onCurrencyChange }: CurrencyConverterProps) => {
   const { rates, loading, updating, updateRates, convertCurrency, saveConversion } = useExchangeRates();
   const { toast } = useToast();
   const [amount, setAmount] = useState('1000');
   const [convertedUSD, setConvertedUSD] = useState(0);
   const [convertedEUR, setConvertedEUR] = useState(0);
-  const [selectedCurrency, setSelectedCurrency] = useState<'USD' | 'EUR' | null>(null);
 
   const usdRate = rates.find(r => r.currency_code === 'USD');
   const eurRate = rates.find(r => r.currency_code === 'EUR');
@@ -29,10 +33,18 @@ const CurrencyConverter = () => {
     
     await saveConversion('BRL', currency, numAmount, converted);
     
-    setSelectedCurrency(currency);
+    onCurrencyChange(currency);
     toast({
       title: "Conversão Realizada",
-      description: `R$ ${numAmount.toLocaleString('pt-BR', { minimumFractionDigits: 2 })} = ${currency} ${converted.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`,
+      description: `Dashboard convertido para ${currency}. R$ ${numAmount.toLocaleString('pt-BR', { minimumFractionDigits: 2 })} = ${currency} ${converted.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`,
+    });
+  };
+
+  const handleResetToBRL = () => {
+    onCurrencyChange('BRL');
+    toast({
+      title: "Moeda Resetada",
+      description: "Dashboard voltou para Reais (BRL)",
     });
   };
 
@@ -51,15 +63,31 @@ const CurrencyConverter = () => {
         <CardTitle className="flex items-center gap-2">
           <ArrowRightLeft className="h-5 w-5 text-primary" />
           Conversor de Moedas
+          {selectedCurrency !== 'BRL' && (
+            <span className="text-sm font-normal text-muted-foreground">
+              (Dashboard em {selectedCurrency})
+            </span>
+          )}
         </CardTitle>
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={updateRates}
-          disabled={updating}
-        >
-          <RefreshCw className={`h-4 w-4 ${updating ? 'animate-spin' : ''}`} />
-        </Button>
+        <div className="flex gap-2">
+          {selectedCurrency !== 'BRL' && (
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={handleResetToBRL}
+            >
+              Voltar para BRL
+            </Button>
+          )}
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={updateRates}
+            disabled={updating}
+          >
+            <RefreshCw className={`h-4 w-4 ${updating ? 'animate-spin' : ''}`} />
+          </Button>
+        </div>
       </CardHeader>
       <CardContent className="space-y-6">
         {/* Cotações Atuais */}
@@ -131,7 +159,7 @@ const CurrencyConverter = () => {
             >
               <DollarSign className="h-6 w-6" />
               <div className="text-center">
-                <div className="text-xs opacity-80">Converter para</div>
+                <div className="text-xs opacity-80">Converter Dashboard para</div>
                 <div className="text-lg font-bold">DÓLAR</div>
                 <div className="text-sm mt-1">
                   USD {convertedUSD.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
@@ -147,7 +175,7 @@ const CurrencyConverter = () => {
             >
               <Euro className="h-6 w-6" />
               <div className="text-center">
-                <div className="text-xs opacity-80">Converter para</div>
+                <div className="text-xs opacity-80">Converter Dashboard para</div>
                 <div className="text-lg font-bold">EURO</div>
                 <div className="text-sm mt-1">
                   EUR {convertedEUR.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}

@@ -6,6 +6,7 @@ import FinancialCard from '@/components/FinancialCard';
 import TransactionModal from '@/components/TransactionModal';
 import TransactionHistory from '@/components/TransactionHistory';
 import CurrencyConverter from '@/components/CurrencyConverter';
+import { useExchangeRates } from '@/hooks/useExchangeRates';
 import { 
   DollarSign, 
   TrendingUp, 
@@ -36,11 +37,13 @@ import { useAuth } from '@/hooks/useAuth';
 const Dashboard = () => {
   const [selectedPeriod, setSelectedPeriod] = useState('30d');
   const [showTransactionModal, setShowTransactionModal] = useState(false);
+  const [selectedCurrency, setSelectedCurrency] = useState<'BRL' | 'USD' | 'EUR'>('BRL');
   const navigate = useNavigate();
   const { toast } = useToast();
   const { transactions, loading: transactionsLoading, addTransaction, deleteTransaction } = useTransactions();
   const { categories } = useCategories();
   const { user } = useAuth();
+  const { convertCurrency } = useExchangeRates();
 
   // Data sets for different periods
   const data7d = {
@@ -131,12 +134,25 @@ const Dashboard = () => {
     
     const balance = totalIncome - totalExpenses;
     
+    // Convert to selected currency
+    const convertedBalance = convertCurrency(balance, 'BRL', selectedCurrency);
+    const convertedIncome = convertCurrency(totalIncome, 'BRL', selectedCurrency);
+    const convertedExpenses = convertCurrency(totalExpenses, 'BRL', selectedCurrency);
+    
     return {
-      balance,
-      income: totalIncome,
-      expenses: totalExpenses
+      balance: convertedBalance,
+      income: convertedIncome,
+      expenses: convertedExpenses
     };
-  }, [transactions]);
+  }, [transactions, selectedCurrency, convertCurrency]);
+
+  const getCurrencySymbol = () => {
+    switch (selectedCurrency) {
+      case 'USD': return '$';
+      case 'EUR': return '€';
+      default: return 'R$';
+    }
+  };
 
   const handleQuickAction = (action: string) => {
     switch (action) {
@@ -190,19 +206,19 @@ const Dashboard = () => {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
           <FinancialCard
             title="Saldo Total"
-            value={`R$ ${financialSummary.balance.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`}
+            value={`${getCurrencySymbol()} ${financialSummary.balance.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`}
             icon={<DollarSign className="h-4 w-4" />}
             trend={{ value: "8.2%", isPositive: financialSummary.balance > 0 }}
           />
           <FinancialCard
             title="Receitas"
-            value={`R$ ${financialSummary.income.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`}
+            value={`${getCurrencySymbol()} ${financialSummary.income.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`}
             icon={<TrendingUp className="h-4 w-4" />}
             trend={{ value: "12.5%", isPositive: true }}
           />
           <FinancialCard
             title="Gastos"
-            value={`R$ ${financialSummary.expenses.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`}
+            value={`${getCurrencySymbol()} ${financialSummary.expenses.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`}
             icon={<TrendingDown className="h-4 w-4" />}
             trend={{ value: "4.1%", isPositive: false }}
           />
@@ -214,7 +230,10 @@ const Dashboard = () => {
         </div>
 
         {/* Conversor de Moedas */}
-        <CurrencyConverter />
+        <CurrencyConverter 
+          selectedCurrency={selectedCurrency}
+          onCurrencyChange={setSelectedCurrency}
+        />
 
         {/* Gráficos */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
