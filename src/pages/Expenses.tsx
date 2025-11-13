@@ -7,6 +7,8 @@ import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { TrendingDown, Search, Filter, Calendar, DollarSign } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import { useCurrency } from '@/providers/CurrencyProvider';
+import { useExchangeRates } from '@/hooks/useExchangeRates';
 
 interface Expense {
   id: string;
@@ -19,6 +21,8 @@ interface Expense {
 
 const Expenses = () => {
   const { toast } = useToast();
+  const { selectedCurrency } = useCurrency();
+  const { convertCurrency } = useExchangeRates();
   const [searchTerm, setSearchTerm] = useState('');
   const [filterCategory, setFilterCategory] = useState('all');
   const [filterPeriod, setFilterPeriod] = useState('all');
@@ -102,14 +106,21 @@ const Expenses = () => {
   }, [expenses, searchTerm, filterCategory, filterPeriod]);
 
   const totalExpenses = useMemo(() => {
-    return filteredExpenses.reduce((sum, expense) => sum + expense.amount, 0);
-  }, [filteredExpenses]);
+    const total = filteredExpenses.reduce((sum, expense) => sum + expense.amount, 0);
+    return convertCurrency(total, 'BRL', selectedCurrency);
+  }, [filteredExpenses, selectedCurrency, convertCurrency]);
+
+  const getCurrencySymbol = () => {
+    switch (selectedCurrency) {
+      case 'USD': return '$';
+      case 'EUR': return '€';
+      default: return 'R$';
+    }
+  };
 
   const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat('pt-BR', {
-      style: 'currency',
-      currency: 'BRL'
-    }).format(amount);
+    const converted = convertCurrency(amount, 'BRL', selectedCurrency);
+    return `${getCurrencySymbol()} ${converted.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`;
   };
 
   const formatDate = (dateString: string) => {
@@ -135,7 +146,7 @@ const Expenses = () => {
         </div>
         <div className="text-right">
           <p className="text-sm text-muted-foreground">Total filtrado</p>
-          <p className="text-2xl font-bold text-destructive">{formatCurrency(totalExpenses)}</p>
+          <p className="text-2xl font-bold text-destructive">{getCurrencySymbol()} {totalExpenses.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</p>
         </div>
       </div>
 
