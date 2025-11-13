@@ -6,6 +6,7 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { ThemeProvider } from "@/providers/ThemeProvider";
 import { DebugProvider } from "@/providers/DebugProvider";
 import { SecurityWrapper } from "@/components/SecurityWrapper";
+import { CurrencyProvider } from "@/providers/CurrencyProvider";
 import Layout from "./components/Layout";
 import { DebugPanel } from "./components/DebugPanel";
 import ProtectedRoute from "./components/ProtectedRoute";
@@ -26,9 +27,10 @@ const queryClient = new QueryClient();
 const App = () => (
   <QueryClientProvider client={queryClient}>
     <ThemeProvider defaultTheme="light" storageKey="finska-ui-theme">
-      <DebugProvider>
-        <SecurityWrapper>
-          <TooltipProvider>
+      <CurrencyProvider>
+        <DebugProvider>
+          <SecurityWrapper>
+            <TooltipProvider>
           <Toaster />
           <Sonner />
           <DebugPanel />
@@ -57,6 +59,7 @@ const App = () => (
           </TooltipProvider>
         </SecurityWrapper>
       </DebugProvider>
+      </CurrencyProvider>
     </ThemeProvider>
   </QueryClientProvider>
 );

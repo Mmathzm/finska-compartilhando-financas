@@ -5,13 +5,10 @@ import { Input } from '@/components/ui/input';
 import { DollarSign, Euro, RefreshCw, ArrowRightLeft } from 'lucide-react';
 import { useExchangeRates } from '@/hooks/useExchangeRates';
 import { useToast } from '@/hooks/use-toast';
+import { useCurrency } from '@/providers/CurrencyProvider';
 
-interface CurrencyConverterProps {
-  selectedCurrency: 'BRL' | 'USD' | 'EUR';
-  onCurrencyChange: (currency: 'BRL' | 'USD' | 'EUR') => void;
-}
-
-const CurrencyConverter = ({ selectedCurrency, onCurrencyChange }: CurrencyConverterProps) => {
+const CurrencyConverter = () => {
+  const { selectedCurrency, setSelectedCurrency } = useCurrency();
   const { rates, loading, updating, updateRates, convertCurrency, saveConversion } = useExchangeRates();
   const { toast } = useToast();
   const [amount, setAmount] = useState('1000');
@@ -33,18 +30,18 @@ const CurrencyConverter = ({ selectedCurrency, onCurrencyChange }: CurrencyConve
     
     await saveConversion('BRL', currency, numAmount, converted);
     
-    onCurrencyChange(currency);
+    setSelectedCurrency(currency);
     toast({
       title: "Conversão Realizada",
-      description: `Dashboard convertido para ${currency}. R$ ${numAmount.toLocaleString('pt-BR', { minimumFractionDigits: 2 })} = ${currency} ${converted.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`,
+      description: `Aplicativo convertido para ${currency}. R$ ${numAmount.toLocaleString('pt-BR', { minimumFractionDigits: 2 })} = ${currency} ${converted.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`,
     });
   };
 
   const handleResetToBRL = () => {
-    onCurrencyChange('BRL');
+    setSelectedCurrency('BRL');
     toast({
       title: "Moeda Resetada",
-      description: "Dashboard voltou para Reais (BRL)",
+      description: "Aplicativo voltou para Reais (BRL)",
     });
   };
 
@@ -65,7 +62,7 @@ const CurrencyConverter = ({ selectedCurrency, onCurrencyChange }: CurrencyConve
           Conversor de Moedas
           {selectedCurrency !== 'BRL' && (
             <span className="text-sm font-normal text-muted-foreground">
-              (Dashboard em {selectedCurrency})
+              (Aplicativo em {selectedCurrency})
             </span>
           )}
         </CardTitle>
@@ -159,7 +156,7 @@ const CurrencyConverter = ({ selectedCurrency, onCurrencyChange }: CurrencyConve
             >
               <DollarSign className="h-6 w-6" />
               <div className="text-center">
-                <div className="text-xs opacity-80">Converter Dashboard para</div>
+                <div className="text-xs opacity-80">Converter Aplicativo para</div>
                 <div className="text-lg font-bold">DÓLAR</div>
                 <div className="text-sm mt-1">
                   USD {convertedUSD.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
@@ -175,7 +172,7 @@ const CurrencyConverter = ({ selectedCurrency, onCurrencyChange }: CurrencyConve
             >
               <Euro className="h-6 w-6" />
               <div className="text-center">
-                <div className="text-xs opacity-80">Converter Dashboard para</div>
+                <div className="text-xs opacity-80">Converter Aplicativo para</div>
                 <div className="text-lg font-bold">EURO</div>
                 <div className="text-sm mt-1">
                   EUR {convertedEUR.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}

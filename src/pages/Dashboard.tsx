@@ -33,11 +33,12 @@ import { useToast } from '@/hooks/use-toast';
 import { useTransactions } from '@/hooks/useTransactions';
 import { useCategories } from '@/hooks/useCategories';
 import { useAuth } from '@/hooks/useAuth';
+import { useCurrency } from '@/providers/CurrencyProvider';
 
 const Dashboard = () => {
   const [selectedPeriod, setSelectedPeriod] = useState('30d');
   const [showTransactionModal, setShowTransactionModal] = useState(false);
-  const [selectedCurrency, setSelectedCurrency] = useState<'BRL' | 'USD' | 'EUR'>('BRL');
+  const { selectedCurrency } = useCurrency();
   const navigate = useNavigate();
   const { toast } = useToast();
   const { transactions, loading: transactionsLoading, addTransaction, deleteTransaction } = useTransactions();
@@ -230,10 +231,7 @@ const Dashboard = () => {
         </div>
 
         {/* Conversor de Moedas */}
-        <CurrencyConverter 
-          selectedCurrency={selectedCurrency}
-          onCurrencyChange={setSelectedCurrency}
-        />
+        <CurrencyConverter />
 
         {/* Gráficos */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">

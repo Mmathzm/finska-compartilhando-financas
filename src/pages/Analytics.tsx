@@ -21,6 +21,8 @@ import { useTransactions } from '@/hooks/useTransactions';
 import { useFinancialGoals } from '@/hooks/useFinancialGoals';
 import { useReportExports } from '@/hooks/useReportExports';
 import { useAnalytics } from '@/hooks/useAnalytics';
+import { useCurrency } from '@/providers/CurrencyProvider';
+import { useExchangeRates } from '@/hooks/useExchangeRates';
 import { FilterModal } from '@/components/FilterModal';
 import { ShareReportModal } from '@/components/ShareReportModal';
 import {
@@ -46,6 +48,8 @@ const Analytics = () => {
   const [showShareModal, setShowShareModal] = useState(false);
   const [appliedFilters, setAppliedFilters] = useState<any>(null);
   const { toast } = useToast();
+  const { selectedCurrency } = useCurrency();
+  const { convertCurrency } = useExchangeRates();
   
   // Hooks para dados do banco
   const { transactions, loading: loadingTransactions } = useTransactions();
@@ -67,11 +71,30 @@ const Analytics = () => {
   // Obter dados analíticos
   const { monthlyData, categoryData, dailySpendingData, kpis } = useAnalytics(transactions, monthsBack);
   
+  // Converter KPIs para moeda selecionada
+  const convertedKpis = {
+    avgIncome: convertCurrency(kpis.avgIncome, 'BRL', selectedCurrency),
+    avgExpenses: convertCurrency(kpis.avgExpenses, 'BRL', selectedCurrency),
+    avgSavings: convertCurrency(kpis.avgSavings, 'BRL', selectedCurrency),
+    savingsRate: kpis.savingsRate,
+    incomeChange: kpis.incomeChange,
+    expenseChange: kpis.expenseChange,
+    savingsChange: kpis.savingsChange
+  };
+  
+  const getCurrencySymbol = () => {
+    switch (selectedCurrency) {
+      case 'USD': return '$';
+      case 'EUR': return '€';
+      default: return 'R$';
+    }
+  };
+  
   // Formatar metas para exibição
   const formattedGoals = goals.map(goal => ({
     name: goal.title,
-    current: goal.current_amount,
-    target: goal.target_amount,
+    current: convertCurrency(goal.current_amount, 'BRL', selectedCurrency),
+    target: convertCurrency(goal.target_amount, 'BRL', selectedCurrency),
     percentage: goal.target_amount > 0 ? Math.round((goal.current_amount / goal.target_amount) * 100) : 0
   }));
 
@@ -188,11 +211,11 @@ const Analytics = () => {
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold">
-                R$ {kpis.avgIncome.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                {getCurrencySymbol()} {convertedKpis.avgIncome.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
               </div>
               <div className="flex items-center gap-1 text-xs mt-1">
-                {kpis.incomeChange >= 0 ? <TrendingUp className="h-3 w-3" /> : <TrendingDown className="h-3 w-3" />}
-                <span>{kpis.incomeChange >= 0 ? '+' : ''}{kpis.incomeChange.toFixed(1)}% vs mês anterior</span>
+                {convertedKpis.incomeChange >= 0 ? <TrendingUp className="h-3 w-3" /> : <TrendingDown className="h-3 w-3" />}
+                <span>{convertedKpis.incomeChange >= 0 ? '+' : ''}{convertedKpis.incomeChange.toFixed(1)}% vs mês anterior</span>
               </div>
             </CardContent>
           </Card>
@@ -203,11 +226,11 @@ const Analytics = () => {
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold">
-                R$ {kpis.avgExpenses.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                {getCurrencySymbol()} {convertedKpis.avgExpenses.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
               </div>
               <div className="flex items-center gap-1 text-xs mt-1 text-success">
-                {kpis.expenseChange <= 0 ? <TrendingDown className="h-3 w-3" /> : <TrendingUp className="h-3 w-3" />}
-                <span>{kpis.expenseChange >= 0 ? '+' : ''}{kpis.expenseChange.toFixed(1)}% vs mês anterior</span>
+                {convertedKpis.expenseChange <= 0 ? <TrendingDown className="h-3 w-3" /> : <TrendingUp className="h-3 w-3" />}
+                <span>{convertedKpis.expenseChange >= 0 ? '+' : ''}{convertedKpis.expenseChange.toFixed(1)}% vs mês anterior</span>
               </div>
             </CardContent>
           </Card>
@@ -218,11 +241,11 @@ const Analytics = () => {
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold">
-                R$ {kpis.avgSavings.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                {getCurrencySymbol()} {convertedKpis.avgSavings.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
               </div>
               <div className="flex items-center gap-1 text-xs mt-1 text-success">
-                {kpis.savingsChange >= 0 ? <TrendingUp className="h-3 w-3" /> : <TrendingDown className="h-3 w-3" />}
-                <span>{kpis.savingsChange >= 0 ? '+' : ''}{kpis.savingsChange.toFixed(1)}% vs mês anterior</span>
+                {convertedKpis.savingsChange >= 0 ? <TrendingUp className="h-3 w-3" /> : <TrendingDown className="h-3 w-3" />}
+                <span>{convertedKpis.savingsChange >= 0 ? '+' : ''}{convertedKpis.savingsChange.toFixed(1)}% vs mês anterior</span>
               </div>
             </CardContent>
           </Card>
@@ -232,7 +255,7 @@ const Analytics = () => {
               <CardTitle className="text-sm font-medium text-muted-foreground">Taxa de Economia</CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">{kpis.savingsRate.toFixed(1)}%</div>
+              <div className="text-2xl font-bold">{convertedKpis.savingsRate.toFixed(1)}%</div>
               <div className="flex items-center gap-1 text-xs mt-1 text-success">
                 <Target className="h-3 w-3" />
                 <span>Meta: 30%</span>
