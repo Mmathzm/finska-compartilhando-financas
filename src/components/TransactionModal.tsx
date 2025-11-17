@@ -155,10 +155,7 @@ const TransactionModal = ({ open, onOpenChange, onAddTransaction, categories }: 
           </div>
 
           <DialogFooter>
-            <Button type="button" variant="outline" onClick={() => onOpenChange(false)} disabled={loading}>
-              Cancelar
-            </Button>
-            <Button type="submit" disabled={loading}>
+            <Button type="submit" disabled={loading} className="w-full">
               {loading ? 'Adicionando...' : 'Adicionar Transação'}
             </Button>
           </DialogFooter>

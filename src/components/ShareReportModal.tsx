@@ -133,10 +133,7 @@ export const ShareReportModal = ({ open, onOpenChange, reportData }: ShareReport
               </select>
             </div>
 
-            <div className="flex gap-2 justify-end pt-4">
-              <Button variant="outline" onClick={() => onOpenChange(false)}>
-                Cancelar
-              </Button>
+            <div className="flex justify-end pt-4">
               <Button onClick={handleShare} disabled={loading || !title.trim()}>
                 {loading ? 'Gerando...' : 'Gerar Link'}
               </Button>
