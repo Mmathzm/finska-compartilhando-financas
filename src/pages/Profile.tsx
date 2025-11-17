@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -26,6 +26,7 @@ import {
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/hooks/useAuth';
+import { useProfile } from '@/hooks/useProfile';
 import PaymentMethodsModal from '@/components/PaymentMethodsModal';
 import PrivacySecurityModal from '@/components/PrivacySecurityModal';
 import AdvancedSettingsModal from '@/components/AdvancedSettingsModal';
@@ -36,16 +37,27 @@ const Profile = () => {
   const [showPrivacyModal, setShowPrivacyModal] = useState(false);
   const [showAdvancedModal, setShowAdvancedModal] = useState(false);
   const { toast } = useToast();
-  const { signOut } = useAuth();
+  const { user, signOut } = useAuth();
+  const { profile, loading, updateProfile } = useProfile();
 
   const [profileData, setProfileData] = useState({
-    name: 'Maria Silva',
-    email: 'maria.silva@email.com',
+    name: '',
+    email: '',
     phone: '(11) 99999-9999',
     location: 'São Paulo, SP',
     bio: 'Apaixonada por organização financeira e investimentos.',
     birthDate: '1990-05-15'
   });
+
+  useEffect(() => {
+    if (user && profile) {
+      setProfileData(prev => ({
+        ...prev,
+        name: profile.display_name || user.email?.split('@')[0] || '',
+        email: user.email || ''
+      }));
+    }
+  }, [user, profile]);
 
   const [notifications, setNotifications] = useState({
     emailNotifications: true,
@@ -67,12 +79,23 @@ const Profile = () => {
     { action: 'Lembrete criado', description: 'Conta de luz vencendo em 25/01', date: '1 semana atrás' }
   ];
 
-  const handleSave = () => {
-    toast({
-      title: "Perfil atualizado!",
-      description: "Suas informações foram salvas com sucesso.",
+  const handleSave = async () => {
+    if (!profileData.name.trim()) {
+      toast({
+        title: "Erro",
+        description: "O nome não pode estar vazio",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    const success = await updateProfile({
+      display_name: profileData.name.trim()
     });
-    setIsEditing(false);
+
+    if (success) {
+      setIsEditing(false);
+    }
   };
 
   const handleNotificationChange = (key: string, value: boolean) => {
@@ -132,12 +155,22 @@ const Profile = () => {
           <Button 
             variant={isEditing ? "outline" : "default"}
             onClick={() => setIsEditing(!isEditing)}
+            disabled={loading}
           >
             {isEditing ? 'Cancelar' : 'Editar Perfil'}
           </Button>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        {loading ? (
+          <Card className="shadow-card">
+            <CardContent className="p-6">
+              <div className="flex justify-center items-center h-40">
+                <p className="text-muted-foreground">Carregando perfil...</p>
+              </div>
+            </CardContent>
+          </Card>
+        ) : (
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {/* Coluna Principal */}
           <div className="lg:col-span-2 space-y-6">
             {/* Informações Pessoais */}
@@ -428,6 +461,7 @@ const Profile = () => {
             </Card>
           </div>
         </div>
+        )}
 
         {/* Modais */}
         <PaymentMethodsModal 
