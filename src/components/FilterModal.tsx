@@ -208,10 +208,7 @@ export const FilterModal = ({ open, onOpenChange, onApplyFilter }: FilterModalPr
           </div>
 
           {/* Ações */}
-          <div className="flex gap-2 justify-end">
-            <Button variant="outline" onClick={() => onOpenChange(false)}>
-              Cancelar
-            </Button>
+          <div className="flex justify-end">
             <Button onClick={handleApplyFilter}>
               Aplicar Filtros
             </Button>

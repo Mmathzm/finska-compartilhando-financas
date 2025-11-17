@@ -195,9 +195,6 @@ const PaymentMethodsModal = ({ open, onOpenChange }: PaymentMethodsModalProps) =
                     <Button onClick={handleAddCard} className="bg-gradient-primary">
                       Adicionar Cartão
                     </Button>
-                    <Button variant="outline" onClick={() => setShowAddForm(false)}>
-                      Cancelar
-                    </Button>
                   </div>
                 </CardContent>
               </Card>
