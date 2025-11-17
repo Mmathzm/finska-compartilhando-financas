@@ -10,9 +10,11 @@ import {
   Heart,
   ArrowRightLeft
 } from 'lucide-react';
+import { useAuth } from '@/hooks/useAuth';
 
 const Navbar = () => {
   const location = useLocation();
+  const { user } = useAuth();
 
   const navItems = [
     { to: '/', icon: Home, label: 'Dashboard' },
@@ -54,11 +56,11 @@ const Navbar = () => {
           </div>
           
           <div className="flex items-center space-x-2">
-            <Link to="/auth">
-              <Button variant="secondary" size="sm">
-                Login
-              </Button>
-            </Link>
+            {user && (
+              <span className="text-primary-foreground font-medium">
+                {user.user_metadata?.display_name || user.email}
+              </span>
+            )}
           </div>
         </div>
       </div>
