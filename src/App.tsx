@@ -2,12 +2,14 @@ import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import ErrorBoundary from "./components/ErrorBoundary";
+import { BrowserRouter, HashRouter, Routes, Route } from "react-router-dom";
 import { ThemeProvider } from "@/providers/ThemeProvider";
 import { DebugProvider } from "@/providers/DebugProvider";
 import { SecurityWrapper } from "@/components/SecurityWrapper";
 import { CurrencyProvider } from "@/providers/CurrencyProvider";
 import Layout from "./components/Layout";
+import Index from "./pages/Index";
 import { DebugPanel } from "./components/DebugPanel";
 import ProtectedRoute from "./components/ProtectedRoute";
 import Dashboard from "./pages/Dashboard";
@@ -21,11 +23,15 @@ import Profile from "./pages/Profile";
 import Expenses from "./pages/Expenses";
 import Income from "./pages/Income";
 import NotFound from "./pages/NotFound";
+import TestError from "./pages/TestError";
 
 const queryClient = new QueryClient();
 
+const Router = process.env.NODE_ENV === 'production' ? HashRouter : BrowserRouter;
+
 const App = () => (
   <QueryClientProvider client={queryClient}>
+    <ErrorBoundary>
     <ThemeProvider defaultTheme="light" storageKey="finska-ui-theme">
       <CurrencyProvider>
         <DebugProvider>
@@ -34,10 +40,11 @@ const App = () => (
           <Toaster />
           <Sonner />
           <DebugPanel />
-          <BrowserRouter>
-        <Routes>
-          <Route path="/auth" element={<Auth />} />
-          <Route path="/" element={
+          <Router>
+            <Routes>
+              <Route path="/auth" element={<Auth />} />
+          <Route path="/" element={<Index />} />
+          <Route path="/app" element={
             <ProtectedRoute>
               <Layout />
             </ProtectedRoute>
@@ -51,16 +58,18 @@ const App = () => (
             <Route path="profile" element={<Profile />} />
             <Route path="expenses" element={<Expenses />} />
             <Route path="income" element={<Income />} />
-          </Route>
-          {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
-          <Route path="*" element={<NotFound />} />
-        </Routes>
-          </BrowserRouter>
+            <Route path="test-error" element={<TestError />} />
+              </Route>
+              {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
+              <Route path="*" element={<NotFound />} />
+            </Routes>
+          </Router>
           </TooltipProvider>
         </SecurityWrapper>
       </DebugProvider>
       </CurrencyProvider>
     </ThemeProvider>
+    </ErrorBoundary>
   </QueryClientProvider>
 );
 

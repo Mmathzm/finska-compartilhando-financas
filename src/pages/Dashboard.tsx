@@ -161,10 +161,10 @@ const Dashboard = () => {
         setShowTransactionModal(true);
         break;
       case 'invite-friend':
-        navigate('/shared-accounts');
+        navigate('/app/shared-accounts');
         break;
       case 'new-reminder':
-        navigate('/reminders');
+        navigate('/app/reminders');
         break;
     }
   };

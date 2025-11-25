@@ -33,7 +33,7 @@ const Auth = () => {
   // Redirect if already authenticated
   useEffect(() => {
     if (user && !loading) {
-      navigate('/');
+      navigate('/app');
     }
   }, [user, loading, navigate]);
 
