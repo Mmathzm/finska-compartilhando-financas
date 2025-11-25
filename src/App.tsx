@@ -43,12 +43,11 @@ const App = () => (
           <Router>
             <Routes>
               <Route path="/auth" element={<Auth />} />
-          <Route path="/" element={<Index />} />
-          <Route path="/app" element={
-            <ProtectedRoute>
-              <Layout />
-            </ProtectedRoute>
-          }>
+              <Route path="/" element={
+                <ProtectedRoute>
+                  <Layout />
+                </ProtectedRoute>
+              }>
             <Route index element={<Dashboard />} />
             <Route path="transactions" element={<Transactions />} />
             <Route path="shared-accounts" element={<SharedAccounts />} />
