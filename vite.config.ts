@@ -4,10 +4,7 @@ import path from "path";
 import { componentTagger } from "lovable-tagger";
 
 // https://vitejs.dev/config/
-export default defineConfig(({ mode }) => {
-  const repo = process.env.GITHUB_REPOSITORY ? `/${process.env.GITHUB_REPOSITORY.split('/')[1]}/` : '/';
-  return {
-    base: process.env.CI ? repo : '/',
+export default defineConfig(({ mode }) => ({
   server: {
     host: "::",
     port: 8080,
@@ -17,10 +14,9 @@ export default defineConfig(({ mode }) => {
     mode === 'development' &&
     componentTagger(),
   ].filter(Boolean),
-    resolve: {
+  resolve: {
     alias: {
       "@": path.resolve(__dirname, "./src"),
     },
   },
-  };
-});
+}));

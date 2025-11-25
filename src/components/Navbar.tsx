@@ -37,7 +37,7 @@ const Navbar = () => {
           
           <div className="hidden md:flex items-center space-x-1">
             {navItems.map((item) => {
-              const isActive = location.pathname === item.to || location.pathname.startsWith(item.to + '/');
+              const isActive = location.pathname === item.to;
               return (
                 <Link key={item.to} to={item.to}>
                   <Button
